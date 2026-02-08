@@ -35,14 +35,14 @@ function setCategory(cat) {
 
 function setCat(c) { 
     state.cat = c; 
-    state.openMatch = null; 
+    state.openMatches = [];
     saveState();
     render(); 
 }
 
 function setView(v) { 
     state.view = v; 
-    state.openMatch = null; 
+    state.openMatches = [];
     saveState();
     render(); 
 }
@@ -231,13 +231,46 @@ function render() {
         }
     });
 
-    if (state.view === 'schedule') renderDrawSchedule(container);
-    else if (state.view === 'team') renderTeamSchedule(container);
-    else if (state.view === 'matrix') renderMatrix(container);
-    else if (state.view === 'playdowns') renderPlaydownEditor(container);
+if (state.view === 'schedule') renderDrawSchedule(container);
+else if (state.view === 'team') renderTeamSchedule(container);
+else if (state.view === 'matrix') renderMatrix(container);
+else if (state.view === 'standings') renderStandings(container);
+else if (state.view === 'playdowns') renderPlaydownEditor(container);
 
     if (window.innerWidth < 600) window.scrollTo(0, 0);
 }
+
+
+function liveUpdateScore(drawId, sheet) {
+    const draw = state.data.draws.find(d => d.id === drawId);
+    if (!draw) return;
+
+    const match = draw.matches.find(m => m.sheet === sheet);
+    if (!match) return;
+
+    match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
+    match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
+    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+
+    // sync to scores array
+    const idx = state.scores.findIndex(
+        s => s.drawId === drawId && s.sheet === sheet
+    );
+
+    const scoreObj = { drawId, sheet, ...match };
+
+    if (idx > -1) state.scores[idx] = scoreObj;
+    else state.scores.push(scoreObj);
+
+    // debounce localStorage writes
+    clearTimeout(liveUpdateTimer);
+    liveUpdateTimer = setTimeout(() => {
+        saveState();
+    }, 300);
+
+    render(); // live update UI
+}
+
 
 // ---------- Render Draw Schedule ----------
 function renderDrawSchedule(container) {
@@ -442,5 +475,151 @@ async function init() {
         console.error("Data load failed:", err);
     }
 }
+
+let liveUpdateTimer = null;
+
+function liveUpdateScore(drawId, sheet) {
+    const draw = state.data.draws.find(d => d.id === drawId);
+    if (!draw) return;
+
+    const match = draw.matches.find(m => m.sheet === sheet);
+    if (!match) return;
+
+    match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
+    match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
+    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+
+    // sync to scores array
+    const idx = state.scores.findIndex(
+        s => s.drawId === drawId && s.sheet === sheet
+    );
+
+    const scoreObj = { drawId, sheet, ...match };
+
+    if (idx > -1) state.scores[idx] = scoreObj;
+    else state.scores.push(scoreObj);
+
+    // debounce localStorage writes
+    clearTimeout(liveUpdateTimer);
+    liveUpdateTimer = setTimeout(() => {
+        saveState();
+    }, 300);
+
+    render(); // live update UI
+}
+
+function renderStandings(container) {
+
+    function buildStandingsTable(title, teams) {
+
+        const rows = teams.map(team => {
+
+            let games = 0;
+            let wins = 0;
+            let losses = 0;
+            let pointsFor = 0;
+            let pointsAgainst = 0;
+
+            state.data.draws.forEach(draw => {
+                draw.matches.forEach(m => {
+
+                    if (!m.completed) return;
+
+                    if (m.t1 === team.UTID || m.t2 === team.UTID) {
+
+                        games++;
+
+                        const isT1 = m.t1 === team.UTID;
+                        const pf = isT1 ? m.s1 : m.s2;
+                        const pa = isT1 ? m.s2 : m.s1;
+
+                        pointsFor += pf;
+                        pointsAgainst += pa;
+
+                        if (pf > pa) wins++;
+                        else losses++;
+                    }
+                });
+            });
+
+            return {
+                team,
+                games,
+                wins,
+                losses,
+                pointsFor,
+                pointsAgainst,
+                diff: pointsFor - pointsAgainst
+            };
+        });
+
+        rows.sort((a, b) => {
+            if (b.wins !== a.wins) return b.wins - a.wins;
+            if (b.diff !== a.diff) return b.diff - a.diff;
+            return b.pointsFor - a.pointsFor;
+        });
+
+        return `
+        <div style="margin-bottom:50px;">
+            <div style="
+                font-weight:900;
+                font-size:0.9rem;
+                margin-bottom:12px;
+                color:${title.startsWith('MEN') ? 'var(--accent-blue)' : 'var(--accent)'};
+                border-bottom:2px solid var(--border);
+                padding-bottom:6px;
+            ">
+                ${title}
+            </div>
+
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; background:white; font-size:0.85rem;">
+                    <thead>
+                        <tr style="background:var(--surface);">
+                            <th style="text-align:left; padding:10px;">Team</th>
+                            <th style="width:50px;">GP</th>
+                            <th style="width:50px;">W</th>
+                            <th style="width:50px;">L</th>
+                            <th style="width:70px;">PF</th>
+                            <th style="width:70px;">PA</th>
+                            <th style="width:70px;">+/-</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rows.map((r, i) => `
+                        <tr style="
+                            border-bottom:1px solid var(--border);
+                            background:${state.pinnedTeams.includes(r.team.UTID)
+                                ? 'rgba(56,189,248,0.08)'
+                                : 'transparent'};
+                        ">
+                            <td style="padding:10px; font-weight:700; color:${r.team.color || '#0f172a'};">
+                                ${i + 1}. ${r.team.tname}
+                            </td>
+                            <td style="text-align:center;">${r.games}</td>
+                            <td style="text-align:center; font-weight:800; color:var(--success);">${r.wins}</td>
+                            <td style="text-align:center; font-weight:800; color:#ef4444;">${r.losses}</td>
+                            <td style="text-align:center;">${r.pointsFor}</td>
+                            <td style="text-align:center;">${r.pointsAgainst}</td>
+                            <td style="text-align:center; font-weight:800;">
+                                ${r.diff > 0 ? '+' : ''}${r.diff}
+                            </td>
+                        </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+    }
+
+    const mensTeams = state.data.teams.filter(t => t.UTID.startsWith('M'));
+    const womensTeams = state.data.teams.filter(t => t.UTID.startsWith('W'));
+
+    container.innerHTML = `
+        ${buildStandingsTable('MEN\'S STANDINGS', mensTeams)}
+        ${buildStandingsTable('WOMEN\'S STANDINGS', womensTeams)}
+    `;
+}
+
 
 init();

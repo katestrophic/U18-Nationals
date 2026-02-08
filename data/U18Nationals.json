@@ -1,0 +1,282 @@
+{
+  "teams": [
+    { "UTID": "MAB1", "UPID": "AB", "tname": "AB 1 (Harris)", "skip": "Harris", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MAB2", "UPID": "AB", "tname": "AB 2 (Duncan)", "skip": "Duncan", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MBC1", "UPID": "BC", "tname": "BC (Reynolds)", "skip": "Reynolds", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MMB1", "UPID": "MB", "tname": "MB 1 (Boutet)", "skip": "Boutet", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MMB2", "UPID": "MB", "tname": "MB 2 (Graham)", "skip": "Graham", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MNB1", "UPID": "NB", "tname": "NB (Hanson)", "skip": "Hanson", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MNL1", "UPID": "NL", "tname": "NL (French)", "skip": "French", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MNO1", "UPID": "NO", "tname": "NO 1 (Winters)", "skip": "Winters", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MNO2", "UPID": "NO", "tname": "NO 2 (Curtis)", "skip": "Curtis", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MNS1", "UPID": "NS", "tname": "NS 1 (Lockhart)", "skip": "Lockhart", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MNS2", "UPID": "NS", "tname": "NS 2 (Salzman)", "skip": "Salzman", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MNT1", "UPID": "NT", "tname": "NT (Willkomm)", "skip": "Willkomm", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MNU1", "UPID": "NU", "tname": "NU (Robinson)", "skip": "Robinson", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MON1", "UPID": "ON", "tname": "ON 1 (MacTavish)", "skip": "MacTavish", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MON2", "UPID": "ON", "tname": "ON 2 (Genjaga)", "skip": "Genjaga", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MPE1", "UPID": "PE", "tname": "PE (Haight)", "skip": "Haight", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MQC1", "UPID": "QC", "tname": "QC 1 (Tremblay)", "skip": "Tremblay", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MQC2", "UPID": "QC", "tname": "QC 2 (Janidlo)", "skip": "Janidlo", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MSK1", "UPID": "SK", "tname": "SK 1 (Weiss)", "skip": "Weiss", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MSK2", "UPID": "SK", "tname": "SK 2 (Snow)", "skip": "Snow", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "MYT1", "UPID": "YT", "tname": "YT (Solberg)", "skip": "Solberg", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WAB1", "UPID": "AB", "tname": "AB 1 (Kennedy)", "skip": "Kennedy", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WAB2", "UPID": "AB", "tname": "AB 2 (Yurko)", "skip": "Yurko", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WBC1", "UPID": "BC", "tname": "BC 1 (Rempel)", "skip": "Rempel", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WBC2", "UPID": "BC", "tname": "BC 2 (Wu)", "skip": "Wu", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WMB1", "UPID": "MB", "tname": "MB 1 (Buchalter)", "skip": "Buchalter", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WMB2", "UPID": "MB", "tname": "MB 2 (McPherson)", "skip": "McPherson", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WNB1", "UPID": "NB", "tname": "NB 1 (Carter)", "skip": "Carter", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WNB2", "UPID": "NB", "tname": "NB 2 (Smith)", "skip": "Smith", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WNL1", "UPID": "NL", "tname": "NL (Blandford)", "skip": "Blandford", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WNO1", "UPID": "NO", "tname": "NO 1 (Wright)", "skip": "Wright", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WNO2", "UPID": "NO", "tname": "NO 2 (Baker)", "skip": "Baker", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WNS1", "UPID": "NS", "tname": "NS 1 (Pembelton)", "skip": "Pembelton", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WNS2", "UPID": "NS", "tname": "NS 2 (McEvoy)", "skip": "McEvoy", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WNT1", "UPID": "NT", "tname": "NT (Wainwright)", "skip": "Wainwright", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WNU1", "UPID": "NU", "tname": "NU (Atiq)", "skip": "Atiq", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WON1", "UPID": "ON", "tname": "ON 1 (Wilson)", "skip": "Wilson", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WON2", "UPID": "ON", "tname": "ON 2 (Garrison)", "skip": "Garrison", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WPE1", "UPID": "PE", "tname": "PE (Myers)", "skip": "Myers", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WQC1", "UPID": "QC", "tname": "QC 1 (St. James)", "skip": "St. James", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WQC2", "UPID": "QC", "tname": "QC 2 (Thomassin)", "skip": "Thomassin", "mate": "", "second": "", "lead": "", "coach": "" },
+    { "UTID": "WSK1", "UPID": "SK", "tname": "SK (Wood)", "skip": "Wood", "mate": "", "second": "", "lead": "", "coach": "" }
+  ],
+  "pools": [
+    { "id": "MA", "name": "Men - Pool A", "teams": ["MAB1", "MNO2", "MON1", "MSK2", "MNB1", "MNU1", "MPE1"] },
+    { "id": "MB", "name": "Men - Pool B", "teams": ["MNS1", "MON2", "MQC2", "MMB1", "MNT1", "MYT1", "MNL1"] },
+    { "id": "MC", "name": "Men - Pool C", "teams": ["MSK1", "MMB2", "MNS2", "MAB2", "MNO1", "MQC1", "MBC1"] },
+    { "id": "WA", "name": "Women - Pool A", "teams": ["WAB1", "WBC1", "WNT1", "WMB2", "WNO1", "WQC2", "WNB2"] },
+    { "id": "WB", "name": "Women - Pool B", "teams": ["WNS1", "WAB2", "WON2", "WQC1", "WNB1", "WNU1", "WPE1"] },
+    { "id": "WC", "name": "Women - Pool C", "teams": ["WON1", "WMB1", "WSK1", "WBC2", "WNS2", "WNO2", "WNL1"] }
+  ],
+  "provinces": [
+    { "UPID": "AB", "prov": "Alberta", "flag": "./flags/canada/ab_flag.jpg", "clubs": [] },
+    { "UPID": "BC", "prov": "British Columbia", "flag": "./flags/canada/bc_flag.jpg", "clubs": [] },
+    { "UPID": "MB", "prov": "Manitoba", "flag": "./flags/canada/mb_flag.jpg", "clubs": [] },
+    { "UPID": "NB", "prov": "New Brunswick", "flag": "./flags/canada/nb_flag.jpg", "clubs": [] },
+    { "UPID": "NL", "prov": "Newfoundland and Labrador", "flag": "./flags/canada/nl_flag.jpg", "clubs": [] },
+    { "UPID": "NO", "prov": "Northern Ontario", "flag": "./flags/canada/no_flag.jpg", "clubs": [] },
+    { "UPID": "NS", "prov": "Nova Scotia", "flag": "./flags/canada/ns_flag.jpg", "clubs": [] },
+    { "UPID": "NT", "prov": "Northwest Territories", "flag": "./flags/canada/nt_flag.jpg", "clubs": [] },
+    { "UPID": "NU", "prov": "Nunavut", "flag": "./flags/canada/nu_flag.jpg", "clubs": [] },
+    { "UPID": "ON", "prov": "Ontario", "flag": "./flags/canada/on_flag.jpg", "clubs": [] },
+    { "UPID": "PE", "prov": "Prince Edward Island", "flag": "./flags/canada/pe_flag.jpg", "clubs": [] },
+    { "UPID": "QC", "prov": "Quebec", "flag": "./flags/canada/qc_flag.jpg", "clubs": [] },
+    { "UPID": "SK", "prov": "Saskatchewan", "flag": "./flags/canada/sk_flag.jpg", "clubs": [] },
+    { "UPID": "YT", "prov": "Yukon", "flag": "./flags/canada/yt_flag.jpg", "clubs": [] }
+  ],
+  "draws": [
+    {
+      "id": 1,
+      "time": "Feb 8, 9:00 AM",
+      "matches": [
+        { "sheet": "A", "t1": "MMB1", "t2": "MQC2" },
+        { "sheet": "B", "t1": "MNS1", "t2": "MON2" },
+        { "sheet": "C", "t1": "MSK1", "t2": "MMB2" },
+        { "sheet": "D", "t1": "MON1", "t2": "MSK2" },
+        { "sheet": "E", "t1": "MAB1", "t2": "MNO2" },
+        { "sheet": "F", "t1": "MNB1", "t2": "MNU1" },
+        { "sheet": "G", "t1": "MNL1", "t2": "MNT1" },
+        { "sheet": "H", "t1": "MQC1", "t2": "MAB2" },
+        { "sheet": "I", "t1": "MNO1", "t2": "MNS2" }
+      ]
+    },
+    {
+      "id": 2,
+      "time": "Feb 8, 3:00 PM",
+      "matches": [
+        { "sheet": "A", "t1": "WQC1", "t2": "WAB2" },
+        { "sheet": "B", "t1": "WNB1", "t2": "WNS1" },
+        { "sheet": "C", "t1": "WON1", "t2": "WMB1" },
+        { "sheet": "D", "t1": "WNO1", "t2": "WNB2" },
+        { "sheet": "E", "t1": "WAB1", "t2": "WBC1" },
+        { "sheet": "F", "t1": "WNT1", "t2": "WMB2" },
+        { "sheet": "G", "t1": "WPE1", "t2": "WON2" },
+        { "sheet": "H", "t1": "WNL1", "t2": "WNO2" },
+        { "sheet": "I", "t1": "WSK1", "t2": "WBC2" }
+      ]
+    },
+    {
+      "id": 3,
+      "time": "Feb 8, 8:00 PM",
+      "matches": [
+        { "sheet": "A", "t1": "MSK1", "t2": "MNS2" },
+        { "sheet": "B", "t1": "MMB2", "t2": "MAB2" },
+        { "sheet": "C", "t1": "MNO2", "t2": "MSK2" },
+        { "sheet": "D", "t1": "MNS1", "t2": "MNT1" },
+        { "sheet": "E", "t1": "MON2", "t2": "MQC2" },
+        { "sheet": "F", "t1": "MMB1", "t2": "MYT1" },
+        { "sheet": "G", "t1": "MQC1", "t2": "MBC1" },
+        { "sheet": "H", "t1": "MAB1", "t2": "MNU1" },
+        { "sheet": "I", "t1": "MON1", "t2": "MPE1" }
+      ]
+    },
+    {
+      "id": 4,
+      "time": "Feb 9, 9:30 AM",
+      "matches": [
+        { "sheet": "A", "t1": "WNO1", "t2": "WAB1" },
+        { "sheet": "B", "t1": "WNT1", "t2": "WBC1" },
+        { "sheet": "C", "t1": "WPE1", "t2": "WNS1" },
+        { "sheet": "D", "t1": "WNL1", "t2": "WON1" },
+        { "sheet": "E", "t1": "WSK1", "t2": "WMB1" },
+        { "sheet": "F", "t1": "WNS2", "t2": "WNO2" },
+        { "sheet": "G", "t1": "WQC2", "t2": "WNB2" },
+        { "sheet": "H", "t1": "WQC1", "t2": "WNB1" },
+        { "sheet": "I", "t1": "WNU1", "t2": "WAB2" }
+      ]
+    },
+    {
+      "id": 5,
+      "time": "Feb 9, 2:00 PM",
+      "matches": [
+        { "sheet": "A", "t1": "MNO2", "t2": "MPE1" },
+        { "sheet": "B", "t1": "MSK2", "t2": "MNU1" },
+        { "sheet": "C", "t1": "MQC2", "t2": "MNT1" },
+        { "sheet": "D", "t1": "MMB2", "t2": "MBC1" },
+        { "sheet": "E", "t1": "MAB2", "t2": "MNS2" },
+        { "sheet": "F", "t1": "MSK1", "t2": "MNO1" },
+        { "sheet": "G", "t1": "MAB1", "t2": "MNB1" },
+        { "sheet": "H", "t1": "MON2", "t2": "MYT1" },
+        { "sheet": "I", "t1": "MNS1", "t2": "MNL1" }
+      ]
+    },
+    {
+      "id": 6,
+      "time": "Feb 9, 6:30 PM",
+      "matches": [
+        { "sheet": "A", "t1": "WSK1", "t2": "WNL1" },
+        { "sheet": "B", "t1": "WNS2", "t2": "WON1" },
+        { "sheet": "C", "t1": "WQC2", "t2": "WAB1" },
+        { "sheet": "D", "t1": "WPE1", "t2": "WQC1" },
+        { "sheet": "E", "t1": "WNU1", "t2": "WNB1" },
+        { "sheet": "F", "t1": "WON2", "t2": "WNS1" },
+        { "sheet": "G", "t1": "WBC2", "t2": "WMB1" },
+        { "sheet": "H", "t1": "WNT1", "t2": "WNO1" },
+        { "sheet": "I", "t1": "WMB2", "t2": "WBC1" }
+      ]
+    },
+    {
+      "id": 7,
+      "time": "Feb 10, 9:30 AM",
+      "matches": [
+        { "sheet": "A", "t1": "MNT1", "t2": "MYT1" },
+        { "sheet": "B", "t1": "MQC2", "t2": "MNL1" },
+        { "sheet": "C", "t1": "MAB2", "t2": "MNO1" },
+        { "sheet": "D", "t1": "MNU1", "t2": "MPE1" },
+        { "sheet": "E", "t1": "MSK2", "t2": "MNB1" },
+        { "sheet": "F", "t1": "MNO2", "t2": "MON1" },
+        { "sheet": "G", "t1": "MON2", "t2": "MMB1" },
+        { "sheet": "H", "t1": "MNS2", "t2": "MBC1" },
+        { "sheet": "I", "t1": "MMB2", "t2": "MQC1" }
+      ]
+    },
+    {
+      "id": 8,
+      "time": "Feb 10, 2:00 PM",
+      "matches": [
+        { "sheet": "A", "t1": "WNU1", "t2": "WPE1" },
+        { "sheet": "B", "t1": "WON2", "t2": "WQC1" },
+        { "sheet": "C", "t1": "WBC2", "t2": "WNL1" },
+        { "sheet": "D", "t1": "WQC2", "t2": "WNT1" },
+        { "sheet": "E", "t1": "WMB2", "t2": "WNO1" },
+        { "sheet": "F", "t1": "WNB2", "t2": "WAB1" },
+        { "sheet": "G", "t1": "WAB2", "t2": "WNB1" },
+        { "sheet": "H", "t1": "WNS2", "t2": "WSK1" },
+        { "sheet": "I", "t1": "WNO2", "t2": "WON1" }
+      ]
+    },
+    {
+      "id": 9,
+      "time": "Feb 10, 6:30 PM",
+      "matches": [
+        { "sheet": "A", "t1": "MBC1", "t2": "MNO1" },
+        { "sheet": "B", "t1": "MNS2", "t2": "MQC1" },
+        { "sheet": "C", "t1": "MNU1", "t2": "MON1" },
+        { "sheet": "D", "t1": "MYT1", "t2": "MNL1" },
+        { "sheet": "E", "t1": "MNT1", "t2": "MMB1" },
+        { "sheet": "F", "t1": "MQC2", "t2": "MNS1" },
+        { "sheet": "G", "t1": "MAB2", "t2": "MSK1" },
+        { "sheet": "H", "t1": "MPE1", "t2": "MNB1" },
+        { "sheet": "I", "t1": "MSK2", "t2": "MAB1" }
+      ]
+    },
+    {
+      "id": 10,
+      "time": "Feb 11, 9:30 AM",
+      "matches": [
+        { "sheet": "A", "t1": "WNB2", "t2": "WNT1" },
+        { "sheet": "B", "t1": "WMB2", "t2": "WQC2" },
+        { "sheet": "C", "t1": "WON2", "t2": "WNU1" },
+        { "sheet": "D", "t1": "WNO2", "t2": "WSK1" },
+        { "sheet": "E", "t1": "WBC2", "t2": "WNS2" },
+        { "sheet": "F", "t1": "WMB1", "t2": "WNL1" },
+        { "sheet": "G", "t1": "WBC1", "t2": "WNO1" },
+        { "sheet": "H", "t1": "WAB2", "t2": "WPE1" },
+        { "sheet": "I", "t1": "WNS1", "t2": "WQC1" }
+      ]
+    },
+    {
+      "id": 11,
+      "time": "Feb 11, 2:00 PM",
+      "matches": [
+        { "sheet": "A", "t1": "MNB1", "t2": "MON1" },
+        { "sheet": "B", "t1": "MPE1", "t2": "MAB1" },
+        { "sheet": "C", "t1": "MYT1", "t2": "MNS1" },
+        { "sheet": "D", "t1": "MNO1", "t2": "MQC1" },
+        { "sheet": "E", "t1": "MBC1", "t2": "MSK1" },
+        { "sheet": "F", "t1": "MNS2", "t2": "MMB2" },
+        { "sheet": "G", "t1": "MNU1", "t2": "MNO2" },
+        { "sheet": "H", "t1": "MNL1", "t2": "MMB1" },
+        { "sheet": "I", "t1": "MNT1", "t2": "MON2" }
+      ]
+    },
+    {
+      "id": 12,
+      "time": "Feb 11, 6:30 PM",
+      "matches": [
+        { "sheet": "A", "t1": "WMB1", "t2": "WNS2" },
+        { "sheet": "B", "t1": "WNO2", "t2": "WBC2" },
+        { "sheet": "C", "t1": "WNB2", "t2": "WMB2" },
+        { "sheet": "D", "t1": "WNS1", "t2": "WNU1" },
+        { "sheet": "E", "t1": "WAB2", "t2": "WON2" },
+        { "sheet": "F", "t1": "WNB1", "t2": "WPE1" },
+        { "sheet": "G", "t1": "WON1", "t2": "WSK1" },
+        { "sheet": "H", "t1": "WBC1", "t2": "WQC2" },
+        { "sheet": "I", "t1": "WAB1", "t2": "WNT1" }
+      ]
+    },
+    {
+      "id": 13,
+      "time": "Feb 12, 8:30 AM",
+      "matches": [
+        { "sheet": "A", "t1": "MNL1", "t2": "MON2" },
+        { "sheet": "B", "t1": "MMB1", "t2": "MNS1" },
+        { "sheet": "C", "t1": "MQC1", "t2": "MSK1" },
+        { "sheet": "D", "t1": "MNB1", "t2": "MNO2" },
+        { "sheet": "E", "t1": "MON1", "t2": "MAB1" },
+        { "sheet": "F", "t1": "MPE1", "t2": "MSK2" },
+        { "sheet": "G", "t1": "MYT1", "t2": "MQC2" },
+        { "sheet": "H", "t1": "MNO1", "t2": "MMB2" },
+        { "sheet": "I", "t1": "MBC1", "t2": "MAB2" }
+      ]
+    },
+    {
+      "id": 14,
+      "time": "Feb 12, 12:30 PM",
+      "matches": [
+        { "sheet": "A", "t1": "WNB1", "t2": "WON2" },
+        { "sheet": "B", "t1": "WNS1", "t2": "WAB2" },
+        { "sheet": "C", "t1": "WMB1", "t2": "WNO2" },
+        { "sheet": "D", "t1": "WAB1", "t2": "WMB2" },
+        { "sheet": "E", "t1": "WBC1", "t2": "WNB2" },
+        { "sheet": "F", "t1": "WNO1", "t2": "WQC2" },
+        { "sheet": "G", "t1": "WQC1", "t2": "WNU1" },
+        { "sheet": "H", "t1": "WON1", "t2": "WBC2" },
+        { "sheet": "I", "t1": "WNL1", "t2": "WNS2" }
+      ]
+    }
+  ]
+}
