@@ -163,7 +163,8 @@
         {
             "UTID": "WNS1",
             "UPID": "NS",
-            "tname": "NS 1 (Pembelton)"
+            "tname": "NS 1 (Pembelton)",
+            "color": "#ea3939"
         },
         {
             "UTID": "WNS2",
@@ -438,7 +439,7 @@
                     "t2": "WAB2",
                     "s1": 4,
                     "s2": 2,
-                    "completed": false
+                    "completed": true
                 },
                 {
                     "sheet": "B",
@@ -446,15 +447,15 @@
                     "t2": "WNS1",
                     "s1": 2,
                     "s2": 11,
-                    "completed": false
+                    "completed": true
                 },
                 {
                     "sheet": "C",
                     "t1": "WON1",
                     "t2": "WMB1",
-                    "s1": 6,
-                    "s2": 7,
-                    "completed": false
+                    "s1": 7,
+                    "s2": 8,
+                    "completed": true
                 },
                 {
                     "sheet": "D",
@@ -462,15 +463,15 @@
                     "t2": "WNB2",
                     "s1": 5,
                     "s2": 2,
-                    "completed": false
+                    "completed": true
                 },
                 {
                     "sheet": "E",
                     "t1": "WAB1",
                     "t2": "WBC1",
-                    "s1": 2,
+                    "s1": 3,
                     "s2": 4,
-                    "completed": false
+                    "completed": true
                 },
                 {
                     "sheet": "F",
