@@ -576,49 +576,59 @@ function renderStandings(container) {
                 <table style="width:100%; border-collapse:collapse; background:white; font-size:0.85rem;">
                     <thead>
                         <tr style="background:var(--surface);">
-                            <th style="text-align:left; padding:10px;">Team</th>
-                            <th style="width:50px;">GP</th>
+                          <th>Prov</th>
+                            <th style="text-align:left; padding:10px;">Team Standing</th>
+                            <th style="width:40px;">Games Played</th>
                             <th style="width:50px;">W</th>
                             <th style="width:50px;">L</th>
-                            <th style="width:70px;">PF</th>
-                            <th style="width:70px;">PA</th>
-                            <th style="width:70px;">+/-</th>
+                            <th style="width:70px;">Points</th>
+                            <th style="width:70px;">Opponents</th>
+                            <th style="width:70px;">Difference</th>
                         </tr>
                     </thead>
                     <tbody>
-                        ${rows.map((r, i) => `
-                        <tr style="
-                            border-bottom:1px solid var(--border);
-                            background:${state.pinnedTeams.includes(r.team.UTID)
-                                ? 'rgba(56,189,248,0.08)'
-                                : 'transparent'};
-                        ">
-                            <td style="padding:10px; font-weight:700; color:${r.team.color || '#0f172a'};">
-                                ${i + 1}. ${r.team.tname}
-                            </td>
-                            <td style="text-align:center;">${r.games}</td>
-                            <td style="text-align:center; font-weight:800; color:var(--success);">${r.wins}</td>
-                            <td style="text-align:center; font-weight:800; color:#ef4444;">${r.losses}</td>
-                            <td style="text-align:center;">${r.pointsFor}</td>
-                            <td style="text-align:center;">${r.pointsAgainst}</td>
-                            <td style="text-align:center; font-weight:800;">
-                                ${r.diff > 0 ? '+' : ''}${r.diff}
-                            </td>
-                        </tr>
-                        `).join('')}
-                    </tbody>
+    ${rows.map((r, i) => `
+    <tr style="
+        border-bottom:1px solid var(--border);
+        background:${state.pinnedTeams.includes(r.team.UTID)
+            ? 'rgba(56,189,248,0.08)'
+            : 'transparent'};">
+        
+        <!-- Flag column -->
+        <td style="padding:10px; width:40px; text-align:center;">
+            <img src="${getFlag(r.team.UTID)}" style="width:30px; height:auto;">
+        </td>
+
+        <!-- Team name column -->
+        <td style="padding:6px; max-width:200px; width:100px; font-weight:700; color:${r.team.color || '#0f172a'};">
+            ${i + 1}. ${r.team.tname}
+        </td>
+
+        <td style="text-align:center;">${r.games}</td>
+        <td style="text-align:center; font-weight:800; color:var(--success);">${r.wins}</td>
+        <td style="text-align:center; font-weight:800; color:#ef4444;">${r.losses}</td>
+        <td style="text-align:center;">${r.pointsFor}</td>
+        <td style="text-align:center;">${r.pointsAgainst}</td>
+        <td style="text-align:center; font-weight:800;">
+            ${r.diff > 0 ? '+' : ''}${r.diff}
+        </td>
+    </tr>
+    `).join('')}
+</tbody>
+
                 </table>
             </div>
         </div>`;
     }
 
-    const mensTeams = state.data.teams.filter(t => t.UTID.startsWith('M'));
-    const womensTeams = state.data.teams.filter(t => t.UTID.startsWith('W'));
+const mensTeams = state.data.teams.filter(t => t.UTID.startsWith('M'));
+const womensTeams = state.data.teams.filter(t => t.UTID.startsWith('W'));
 
-    container.innerHTML = `
-        ${buildStandingsTable('MEN\'S STANDINGS', mensTeams)}
-        ${buildStandingsTable('WOMEN\'S STANDINGS', womensTeams)}
-    `;
+container.innerHTML = `
+    ${buildStandingsTable('MEN\'S STANDINGS', mensTeams)}
+    ${buildStandingsTable('WOMEN\'S STANDINGS', womensTeams)}
+`;
+
 }
 
 

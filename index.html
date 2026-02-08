@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>U18 Nationals 2026</title>
     <link rel="stylesheet" href="./styles/styles.css">
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 <body>
@@ -29,11 +31,8 @@
             <button onclick="setView('playdowns')" id="v-pla" class="icon-btn"><i class="ph ph-trophy"></i></button>
             <button onclick="setView('matrix')" id="v-mat" class="icon-btn"><i class="ph ph-grid-four"></i></button>
             <button onclick="setView('team')" id="v-tea" class="icon-btn"><i class="ph ph-users-three"></i></button>
+            <button onclick="setView('standings')" id="view-stand" class="icon-btn"><i class="ph ph-chart-bar"></i></button>
             <button onclick="setView('schedule')" id="v-sch" class="icon-btn active"><i class="ph ph-calendar-blank"></i></button>
-            <button class="icon-btn" id="view-stand"
-        onclick="setView('standings')">
-    <i class="ph ph-chart-bar"></i>
-</button>
         </div>
     </div>
   </nav>
@@ -44,7 +43,7 @@
   <!-- BOTTOM NAV (for mobile) -->
   <nav class="bottom-nav">
     <button onclick="setView('schedule')" class="icon-btn"><i class="ph ph-calendar-blank"></i></button>
-    <button onclick="setView('team')" class="icon-btn"><i class="ph ph-users-three"></i></button>
+    <button onclick="setView('standings')" id="view-stand" class="icon-btn"><i class="ph ph-chart-bar"></i></button><button onclick="setView('team')" class="icon-btn"><i class="ph ph-users-three"></i></button>
     <button onclick="setView('matrix')" class="icon-btn"><i class="ph ph-grid-four"></i></button>
     <button onclick="setView('playdowns')" class="icon-btn"><i class="ph ph-trophy"></i></button>
   </nav>
