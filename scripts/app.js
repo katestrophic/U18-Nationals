@@ -1,7 +1,7 @@
 
 let state = { 
     data: null, 
-    cat: 'M', 
+    cat: 'A', 
     view: 'schedule', 
     openMatch: null,
     pinnedTeams: JSON.parse(localStorage.getItem('pinnedTeams')) || [] 
