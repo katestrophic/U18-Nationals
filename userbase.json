@@ -357,47 +357,74 @@
         {
           "sheet": "A",
           "t1": "MMB1",
-          "t2": "MQC2"
+          "t2": "MQC2",
+          "s1": 1,
+          "s2": 8,
+          "completed": true
         },
         {
           "sheet": "B",
           "t1": "MNS1",
-          "t2": "MON2"
+          "t2": "MON2",
+          "s1": 4,
+          "s2": 5,
+          "completed": true
         },
         {
           "sheet": "C",
           "t1": "MSK1",
-          "t2": "MMB2"
+          "t2": "MMB2",
+          "s1": 7,
+          "s2": 6,
+          "completed": true
         },
         {
           "sheet": "D",
           "t1": "MON1",
-          "t2": "MSK2"
+          "t2": "MSK2",
+          "s1": 6,
+          "s2": 4,
+          "completed": true
         },
         {
           "sheet": "E",
           "t1": "MAB1",
-          "t2": "MNO2"
+          "t2": "MNO2",
+          "s1": 6,
+          "s2": 3,
+          "completed": true
         },
         {
           "sheet": "F",
           "t1": "MNB1",
-          "t2": "MNU1"
+          "t2": "MNU1",
+          "s1": 13,
+          "s2": 4,
+          "completed": true
         },
         {
           "sheet": "G",
           "t1": "MNL1",
-          "t2": "MNT1"
+          "t2": "MNT1",
+          "s1": 9,
+          "s2": 3,
+          "completed": true
         },
         {
           "sheet": "H",
           "t1": "MQC1",
-          "t2": "MAB2"
+          "t2": "MAB2",
+          "s1": 6,
+          "s2": 3,
+          "completed": true
         },
         {
           "sheet": "I",
           "t1": "MNO1",
-          "t2": "MNS2"
+          "t2": "MNS2",
+          "s1": 6,
+          "s2": 4,
+          "completed": true
         }
       ]
     },
@@ -1239,11 +1266,21 @@
       ]
     }
   ],
-  "state":[
-    {"data": ""},
-    {"cat": "A"},
-    {"pinnedTeams":[]},
-    {"openMatches":[]},
-    {"scores":[]}
+  "state": [
+    {
+      "data": ""
+    },
+    {
+      "cat": "A"
+    },
+    {
+      "pinnedTeams": []
+    },
+    {
+      "openMatches": []
+    },
+    {
+      "scores": []
+    }
   ]
 }
