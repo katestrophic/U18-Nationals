@@ -37,6 +37,7 @@
     </div>
   </nav>
 
+
   <!-- MAIN CONTENT -->
   <main id="view-container" class="app-body"></main>
 
@@ -48,6 +49,24 @@
     <button onclick="setView('playdowns')" class="icon-btn"><i class="ph ph-trophy"></i></button>
   </nav>
 
+
+  <footer class="admin-controls" style="padding: 20px; background: #f1f5f9; border-radius: 12px; margin: 10px;">
+    <h3 style="margin-top:0;">Database Sync</h3>
+    
+    <button onclick="exportDatabase()" style="background: var(--accent); color:white; padding:10px; border-radius:6px; border:none; width:100%; margin-bottom:10px;">
+        Export settings
+    </button>
+
+    <label style="display:block; text-align:center; padding:10px; background:#e2e8f0; border-radius:6px; cursor:pointer;">
+        Load settings
+        <input type="file" accept=".json" onchange="importDatabase(event)" style="display:none;">
+    </label>
+    
+    <button onclick="if(confirm('Clear all scores?')) { localStorage.removeItem('curlingDB'); location.reload(); }" 
+            style="background:transparent; color:#ef4444; border:none; width:100%; margin-top:20px; font-size:0.8rem;">
+        Reset to Factory Settings
+    </button>
+  </footer>
   <script src="./scripts/app.js"></script>
 </body>
 </html>
