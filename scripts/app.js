@@ -208,13 +208,15 @@ function toggleDrawDate(header) {
 }
 
 // ---------- Render Functions ----------
-function generateMatchRow(m, drawId) {
+function generateMatchRow(m, drawId, showTime = false) {
     const isOpen = state.openMatch === `${drawId}-${m.sheet}`;
     const t1 = getTeam(m.t1) || { tname: "TBD", color: "#ccc" };
     const t2 = getTeam(m.t2) || { tname: "TBD", color: "#ccc" };
 
     return `
     <div class="match-row ${getGenderClass(m.t1)}">
+        ${showTime ? `<div style="font-size:0.65rem; font-weight:800; color:var(--text-dim); margin-bottom:4px; padding-left:45px;">${m.time}</div>` : ''}
+        
         <div class="match-summary" onclick="toggleEditor(${drawId}, '${m.sheet}')">
             <span class="sheet-label" style="color:var(--accent); font-weight:900;">${m.sheet}</span>
             <div class="t1-col">
@@ -230,12 +232,8 @@ function generateMatchRow(m, drawId) {
         ${isOpen ? `
         <div class="inline-editor">
             <div style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;">
-                <div style="text-align:center">
-                    <input type="number" id="s1-${drawId}-${m.sheet}" value="${m.s1 || 0}" inputmode="numeric" style="width:60px; text-align:center; font-size:1.2rem; padding:8px; border:1px solid #ddd; border-radius:8px;">
-                </div>
-                <div style="text-align:center">
-                    <input type="number" id="s2-${drawId}-${m.sheet}" value="${m.s2 || 0}" inputmode="numeric" style="width:60px; text-align:center; font-size:1.2rem; padding:8px; border:1px solid #ddd; border-radius:8px;">
-                </div>
+                <input type="number" id="s1-${drawId}-${m.sheet}" value="${m.s1 || 0}" inputmode="numeric" style="width:60px; text-align:center; font-size:1.2rem; padding:8px; border:1px solid #ddd; border-radius:8px;">
+                <input type="number" id="s2-${drawId}-${m.sheet}" value="${m.s2 || 0}" inputmode="numeric" style="width:60px; text-align:center; font-size:1.2rem; padding:8px; border:1px solid #ddd; border-radius:8px;">
             </div>
             <label style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:20px; font-weight:700;">
                 <input type="checkbox" id="final-${drawId}-${m.sheet}" ${m.completed ? 'checked' : ''} style="width:22px; height:22px;"> Final Score
@@ -243,8 +241,7 @@ function generateMatchRow(m, drawId) {
             <button onclick="commitScore(${drawId}, '${m.sheet}')" class="save-btn" style="width:100%; height:50px; background:var(--accent); color:white; border:none; border-radius:10px; font-weight:800;">SAVE RESULT</button>
         </div>` : ''}
     </div>`;
-}
-function render() {
+}function render() {
   const container = document.getElementById('view-container');
   if (!container) return;
 
@@ -342,65 +339,44 @@ function renderDrawSchedule(container) {
 
 // ---------- Render Team Schedule ----------
 function renderTeamSchedule(container) {
-  const allTeams = state.data.teams.filter(
-    t => state.cat === 'A' || t.UTID.startsWith(state.cat)
-  );
-
-  const sortedTeams = [...allTeams].sort((a, b) => {
-    const aP = state.pinnedTeams.includes(a.UTID);
-    const bP = state.pinnedTeams.includes(b.UTID);
-    return (aP === bP)
-      ? a.tname.localeCompare(b.tname)
-      : aP ? -1 : 1;
-  });
-
-  container.innerHTML = sortedTeams.map(team => {
-    const isPinned = state.pinnedTeams.includes(team.UTID);
-
-    const teamMatches = state.data.draws.flatMap(d =>
-      d.matches
-        .filter(m => m.t1 === team.UTID || m.t2 === team.UTID)
-        .map(m => ({
-          ...m,
-          drawId: d.id,
-          time: d.time
-        }))
+    const allTeams = state.data.teams.filter(
+        t => state.cat === 'A' || t.UTID.startsWith(state.cat)
     );
 
-    return `
-            <div class="team-group ${getGenderClass(team.UTID)}"
-                 style="margin-bottom:48px; padding-left:10px;">
+    const sortedTeams = [...allTeams].sort((a, b) => {
+        const aP = state.pinnedTeams.includes(a.UTID);
+        const bP = state.pinnedTeams.includes(b.UTID);
+        return (aP === bP) ? a.tname.localeCompare(b.tname) : aP ? -1 : 1;
+    });
 
-                <div style="display:flex; align-items:center; gap:10px;
-                            margin-bottom:16px;
-                            border-bottom:2px solid ${team.color || '#eee'};
-                            padding-bottom:8px;">
+    container.innerHTML = sortedTeams.map(team => {
+        const isPinned = state.pinnedTeams.includes(team.UTID);
 
-                    <button onclick="togglePin('${team.UTID}', event)"
-                        style="background:none;border:none;cursor:pointer;
-                               font-size:1.2rem;
-                               color:${isPinned ? 'var(--accent)' : '#ccc'}">
+        // Get matches and sort them chronologically
+        const teamMatches = state.data.draws.flatMap(d =>
+            d.matches
+                .filter(m => m.t1 === team.UTID || m.t2 === team.UTID)
+                .map(m => ({
+                    ...m,
+                    drawId: d.id,
+                    time: d.time // Grab time from the parent draw
+                }))
+        ).sort((a, b) => a.drawId - b.drawId); // Sort by Draw ID
+
+        return `
+            <div class="team-group ${getGenderClass(team.UTID)}" style="margin-bottom:48px; padding-left:10px;">
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:2px solid ${team.color || '#eee'}; padding-bottom:8px;">
+                    <button onclick="togglePin('${team.UTID}', event)" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:${isPinned ? 'var(--accent)' : '#ccc'}">
                         <i class="${isPinned ? 'ph-fill' : 'ph'} ph-push-pin"></i>
                     </button>
-
-                    <img src="${getFlag(team.UTID)}"
-                         class="flag-icon" style="width:24px;">
-
-                    <h2 style="margin:0;font-size:1rem;
-                               color:${team.color || 'inherit'};
-                               flex-grow:1;">
-                        ${team.tname}
-                    </h2>
-
-                    <input type="color"
-                           value="${team.color || '#0f172a'}"
-                           onchange="updateTeamColor('${team.UTID}', this.value)">
+                    <img src="${getFlag(team.UTID)}" class="flag-icon" style="width:24px;">
+                    <h2 style="margin:0;font-size:1rem;color:${team.color || 'inherit'};flex-grow:1;">${team.tname}</h2>
+                    <input type="color" value="${team.color || '#0f172a'}" onchange="updateTeamColor('${team.UTID}', this.value)">
                 </div>
-
-                ${teamMatches.map(m => generateMatchRow(m)).join('')}
+                ${teamMatches.map(m => generateMatchRow(m, m.drawId, true)).join('')}
             </div>
         `;
-  }).join('');
+    }).join('');
 }
 
 // ---------- Render Matrix ----------
