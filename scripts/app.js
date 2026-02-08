@@ -1,0 +1,362 @@
+
+let state = { 
+    data: null, 
+    cat: 'M', 
+    view: 'schedule', 
+    openMatch: null,
+    pinnedTeams: JSON.parse(localStorage.getItem('pinnedTeams')) || [] 
+};
+
+const isPinnedMatch = (m) => state.pinnedTeams.includes(m.t1) || state.pinnedTeams.includes(m.t2);
+const getTeam = (id) => state.data.teams.find(t => t.UTID === id);
+const getProvince = (upid) => state.data.provinces.find(p => p.UPID === upid)?.prov || '';
+const getFlag = (id) => `./assets/flags/canada/${getTeam(id)?.UPID.toLowerCase()}_flag.png`;
+const getGenderClass = (id) => {
+    if (!id || id === 'TBD') return '';
+    if (id.startsWith('M')) return 'gender-M';
+    if (id.startsWith('W')) return 'gender-W';
+    return '';
+};
+
+
+function setCat(c) { 
+    state.cat = c; 
+    state.openMatch = null; 
+    render(); 
+}
+function setView(v) { 
+    state.view = v; 
+    state.openMatch = null; 
+    render(); 
+}
+
+
+function updateTeamColor(teamId, color) {
+    const team = getTeam(teamId);
+    if (team) {
+        team.color = color;
+        render(); 
+    }
+}
+function updatePlaydownTeam(drawId, sheet, slot, teamId) {
+    const draw = state.data.draws.find(d => d.id === drawId);
+    const match = draw.matches.find(m => m.sheet === sheet);
+    match[slot] = teamId;
+    render();
+}
+
+
+function commitScore(drawId, sheet) {
+    const draw = state.data.draws.find(d => d.id === drawId);
+    const match = draw.matches.find(m => m.sheet === sheet);
+    
+    match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
+    match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
+    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+    
+    state.openMatch = null;
+    render();
+}
+
+
+function toggleEditor(drawId, sheet) {
+    const key = `${drawId}-${sheet}`;
+    state.openMatch = state.openMatch === key ? null : key;
+    render();
+}
+function togglePin(teamId, event) {
+    if (event) event.stopPropagation();
+
+    if (state.pinnedTeams.includes(teamId)) {
+        state.pinnedTeams = state.pinnedTeams.filter(id => id !== teamId);
+    } else {
+        state.pinnedTeams.push(teamId);
+    }
+
+    localStorage.setItem('pinnedTeams', JSON.stringify(state.pinnedTeams));
+    render();
+}
+function toggleDrawDate(header) {
+    const content = header.nextElementSibling;
+    if (content.style.display === 'none') {
+        content.style.display = 'block';
+        header.querySelector('.toggle-indicator').textContent = '▼';
+    } else {
+        content.style.display = 'none';
+        header.querySelector('.toggle-indicator').textContent = '▶';
+    }
+}
+
+
+function generateMatchRow(m, drawId) {
+    const isOpen = state.openMatch === `${drawId}-${m.sheet}`;
+    const t1 = getTeam(m.t1) || { tname: "TBD", color: "#ccc" };
+    const t2 = getTeam(m.t2) || { tname: "TBD", color: "#ccc" };
+    const gClass = getGenderClass(m.t1);
+
+    return `
+    <div class="match-row ${gClass}">
+        <div class="match-summary" onclick="toggleEditor(${drawId}, '${m.sheet}')">
+            <span class="sheet-label" style="color:var(--accent); font-weight:900;">${m.sheet}</span>
+            
+            <div class="t1-col">
+                ${m.t1 !== 'TBD' ? `<img src="${getFlag(m.t1)}" class="flag-icon" style="width:20px;">` : ''}
+                <span style="color:${t1.color || '#0f172a'}; font-weight:700;">${t1.tname}</span>
+            </div>
+
+            <span class="score-pill ${m.completed ? 'complete' : ''}">${m.s1 || 0} — ${m.s2 || 0}</span>
+
+            <div class="t2-col">
+                <span style="color:${t2.color || '#0f172a'}; font-weight:700;">${t2.tname}</span>
+                ${m.t2 !== 'TBD' ? `<img src="${getFlag(m.t2)}" class="flag-icon" style="width:20px;">` : ''}
+            </div>
+        </div>
+
+        ${isOpen ? `
+        <div class="inline-editor">
+            <div style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;">
+                <div style="text-align:center">
+                    <div style="font-size:0.6rem; margin-bottom:4px; color:var(--text-dim); text-transform:uppercase;">${t1.tname}</div>
+                    <input type="number" id="s1-${drawId}-${m.sheet}" value="${m.s1 || 0}" inputmode="numeric">
+                </div>
+                <div style="text-align:center">
+                    <div style="font-size:0.6rem; margin-bottom:4px; color:var(--text-dim); text-transform:uppercase;">${t2.tname}</div>
+                    <input type="number" id="s2-${drawId}-${m.sheet}" value="${m.s2 || 0}" inputmode="numeric">
+                </div>
+            </div>
+            <label style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:20px; font-weight:700;">
+                <input type="checkbox" id="final-${drawId}-${m.sheet}" ${m.completed ? 'checked' : ''} style="width:20px; height:20px;"> 
+                Final Score
+            </label>
+            <button onclick="commitScore(${drawId}, '${m.sheet}')" style="width:100%; height:48px;">Save Result</button>
+        </div>` : ''}
+    </div>`;
+}
+
+
+function render() {
+    const container = document.getElementById('view-container');
+    if (!container) return;
+
+    document.querySelectorAll('.pill').forEach(b => {
+        b.classList.toggle('active', b.id === `cat-${state.cat}`);
+    });
+
+    const viewShort = state.view.substring(0, 3);
+    document.querySelectorAll('.icon-btn').forEach(b => {
+        const isMatch = b.id.includes(viewShort);
+        b.classList.toggle('active', isMatch);
+        
+        const icon = b.querySelector('i');
+        if (icon) {
+            if (isMatch) icon.className = icon.className.replace('ph ', 'ph-fill ');
+            else icon.className = icon.className.replace('ph-fill ', 'ph ');
+        }
+    });
+
+    if (state.view === 'schedule') renderDrawSchedule(container);
+    else if (state.view === 'team') renderTeamSchedule(container);
+    else if (state.view === 'matrix') renderMatrix(container);
+    else if (state.view === 'playdowns') renderPlaydownEditor(container);
+
+    if (window.innerWidth < 600) window.scrollTo(0, 0);
+}
+function renderDrawSchedule(container) {
+    // Group draws by date (just the day part)
+    const drawsByDate = {};
+    state.data.draws.forEach(d => {
+        const date = d.time.split(',')[0]; // e.g., "Feb 8"
+        if (!drawsByDate[date]) drawsByDate[date] = [];
+        drawsByDate[date].push(d);
+    });
+
+    container.innerHTML = Object.keys(drawsByDate).map(date => {
+        const draws = drawsByDate[date];
+        return `
+        <div class="draw-date-group">
+            <div class="date-header" onclick="toggleDrawDate(this)">
+                <span class="toggle-indicator">▼</span> ${date}
+            </div>
+            <div class="date-content">
+                ${draws.map(d => {
+                    const matches = d.matches.filter(m =>
+                        state.cat === 'A' || (m.t1 && m.t1.startsWith(state.cat))
+                    );
+                    if (!matches.length) return '';
+                    return `
+                        <div class="draw-group">
+                            <div style="font-weight:800; color:var(--text-dim); margin-bottom:12px; font-size:0.7rem; text-transform:uppercase;">
+                                Draw ${d.id} • ${d.time}
+                            </div>
+                            ${matches.map(m => generateMatchRow(m, d.id)).join('')}
+                        </div>`;
+                }).join('')}
+            </div>
+        </div>`;
+    }).join('');
+}
+function renderTeamSchedule(container) {
+    const allTeams = state.data.teams.filter(
+        t => state.cat === 'A' || t.UTID.startsWith(state.cat)
+    );
+
+    const sortedTeams = [...allTeams].sort((a, b) => {
+        const aP = state.pinnedTeams.includes(a.UTID);
+        const bP = state.pinnedTeams.includes(b.UTID);
+        return (aP === bP)
+            ? a.tname.localeCompare(b.tname)
+            : aP ? -1 : 1;
+    });
+
+    container.innerHTML = sortedTeams.map(team => {
+        const isPinned = state.pinnedTeams.includes(team.UTID);
+
+        const teamMatches = state.data.draws.flatMap(d =>
+            d.matches
+                .filter(m => m.t1 === team.UTID || m.t2 === team.UTID)
+                .map(m => ({
+                    ...m,
+                    drawId: d.id,
+                    time: d.time
+                }))
+        );
+
+        return `
+            <div class="team-group ${getGenderClass(team.UTID)}"
+                 style="margin-bottom:48px; padding-left:10px;">
+
+                <div style="display:flex; align-items:center; gap:10px;
+                            margin-bottom:16px;
+                            border-bottom:2px solid ${team.color || '#eee'};
+                            padding-bottom:8px;">
+
+                    <button onclick="togglePin('${team.UTID}', event)"
+                        style="background:none;border:none;cursor:pointer;
+                               font-size:1.2rem;
+                               color:${isPinned ? 'var(--accent)' : '#ccc'}">
+                        <i class="${isPinned ? 'ph-fill' : 'ph'} ph-push-pin"></i>
+                    </button>
+
+                    <img src="${getFlag(team.UTID)}"
+                         class="flag-icon" style="width:24px;">
+
+                    <h2 style="margin:0;font-size:1rem;
+                               color:${team.color || 'inherit'};
+                               flex-grow:1;">
+                        ${team.tname}
+                    </h2>
+
+                    <input type="color"
+                           value="${team.color || '#0f172a'}"
+                           onchange="updateTeamColor('${team.UTID}', this.value)">
+                </div>
+
+                ${teamMatches.map(m => generateMatchRow(m)).join('')}
+            </div>
+        `;
+    }).join('');
+}
+function renderMatrix(container) {
+    const activePools = state.data.pools.filter(p => state.cat === 'A' || p.id.startsWith(state.cat));
+    container.innerHTML = activePools.map(pool => {
+        const poolTeams = pool.teams.map(tid => getTeam(tid)).filter(t => t);
+        const headerColor = pool.id.startsWith('M') ? 'var(--accent-blue)' : 'var(--accent)';
+
+        return `
+        <div class="pool-container" style="margin-bottom: 50px;">
+            <div style="background: ${headerColor}; color: white; padding: 12px 20px; border-radius: 8px 8px 0 0; font-weight: 800; display: flex; justify-content: space-between;">
+                <span>${pool.name.toUpperCase()}</span>
+                <span style="font-size: 0.7rem; opacity: 0.8;">ROUND RR</span>
+            </div>
+            <div style="overflow-x: auto; border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px;">
+                <table style="width: 100%; border-collapse: collapse; background: white; font-size: 0.85rem;">
+                    <thead>
+                        <tr style="background: var(--surface);">
+                            <th style="text-align: left; padding: 12px; border-bottom: 2px solid var(--border); width: 180px;">Team</th>
+                            ${poolTeams.map((_, i) => `<th style="width: 40px; text-align: center; border-left: 1px solid var(--border); border-bottom: 2px solid var(--border);">${i + 1}</th>`).join('')}
+                            <th style="width: 60px; text-align: center; background: #eef2f7; border-bottom: 2px solid var(--border);">W-L</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${poolTeams.map((rowTeam, i) => {
+                            let w = 0, l = 0;
+                            const cells = poolTeams.map((colTeam, j) => {
+                                if (i === j) return `<td style="background: #e2e8f0; border-left: 1px solid var(--border);"></td>`;
+                                const m = state.data.draws.flatMap(d => d.matches).find(match => 
+                                    match.completed && (
+                                        (match.t1 === rowTeam.UTID && match.t2 === colTeam.UTID) || 
+                                        (match.t1 === colTeam.UTID && match.t2 === rowTeam.UTID)
+                                    )
+                                );
+                                if (!m) return `<td style="border-left: 1px solid var(--border); text-align: center; color: #cbd5e1;">-</td>`;
+                                const won = (m.t1 === rowTeam.UTID) ? (m.s1 > m.s2) : (m.s2 > m.s1);
+                                won ? w++ : l++;
+                                return `<td style="border-left: 1px solid var(--border); text-align: center; font-weight: 800; color: ${won ? 'var(--success)' : '#ef4444'};">${won ? 'W' : 'L'}</td>`;
+                            }).join('');
+                            return `
+                            <tr style="border-bottom: 1px solid var(--border);">
+                                <td style="padding: 10px 12px; font-weight: 600;">${rowTeam.tname}</td>
+                                ${cells}
+                                <td style="text-align: center; font-weight: 900; background: var(--surface); border-left: 1px solid var(--border);">${w}-${l}</td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        </div>`;
+    }).join('');
+}
+function renderPlaydownEditor(container) {
+    const playdownDraws = state.data.draws.filter(d => d.id >= 15);
+    if (!playdownDraws.length) {
+        container.innerHTML = `<div style="text-align:center; color:var(--text-dim); margin-top:50px;">No playoff draws available yet.</div>`;
+        return;
+    }
+
+    container.innerHTML = playdownDraws.map(d => {
+        return `
+        <div class="draw-group" style="margin-bottom:40px">
+            <div style="font-weight:900; color:var(--accent); margin-bottom:12px; border-bottom:1px solid var(--border); font-size:0.9rem;">
+                ${d.time.toUpperCase()}
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:12px;">
+                ${d.matches.map(m => {
+                    const t1 = getTeam(m.t1) || { tname: "TBD", color: "#ccc" };
+                    const t2 = getTeam(m.t2) || { tname: "TBD", color: "#ccc" };
+                    const gClass = getGenderClass(m.t1);
+
+                    return `
+                    <div class="match-card ${gClass}" style="flex:1 1 200px; background:white; border:1px solid var(--border); border-radius:12px; padding:15px;">
+                        <div style="font-size:0.65rem; font-weight:800; color:var(--text-dim); margin-bottom:8px;">${m.note || 'Playoff'} • Sheet ${m.sheet}</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;">
+                            <span style="color:${t1.color || '#0f172a'}; font-weight:700;">${t1.tname}</span>
+                            <span style="font-weight:900; color:var(--border);">VS</span>
+                            <span style="color:${t2.color || '#0f172a'}; font-weight:700;">${t2.tname}</span>
+                        </div>
+                        <div style="display:flex; justify-content:center; gap:12px; margin-bottom:12px;">
+                            <input type="number" id="s1-${d.id}-${m.sheet}" value="${m.s1 || 0}" style="width:60px; text-align:center; border:1px solid var(--border); border-radius:6px; height:36px;">
+                            <input type="number" id="s2-${d.id}-${m.sheet}" value="${m.s2 || 0}" style="width:60px; text-align:center; border:1px solid var(--border); border-radius:6px; height:36px;">
+                        </div>
+                        <label style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:12px; font-weight:700;">
+                            <input type="checkbox" id="final-${d.id}-${m.sheet}" ${m.completed ? 'checked' : ''} style="width:20px; height:20px;"> Final Score
+                        </label>
+                        <button onclick="commitScore(${d.id}, '${m.sheet}')" style="width:100%; height:40px; font-weight:700; border:none; border-radius:6px; background:var(--accent); color:white;">Save</button>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+
+async function init() {
+    try {
+        const res = await fetch('userbase.json');
+        state.data = await res.json();
+        render();
+    } catch (err) {
+        console.error("Data load failed:", err);
+    }
+}
+
+init();

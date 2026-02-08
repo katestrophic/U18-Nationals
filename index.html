@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>U18 Nationals 2026</title>
+    <link rel="stylesheet" href="./styles/styles.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+   
+  <!-- TOP NAV -->
+  <nav class="top-nav">
+    <div class="nav-row nav-top">
+        <div class="nav-left">
+            <h1 class="logo">U18<span>NATIONALS</span></h1>
+            <span class="badge"> - - + 2026 TIMONDS + - - - - -</span>
+        </div>
+    </div>
+
+    <div class="nav-row nav-bottom">
+        <div class="nav-center">
+            <button onclick="setCat('A')" id="cat-A" class="pill active">ALL</button>
+            <button onclick="setCat('M')" id="cat-M" class="pill">MEN</button>
+            <button onclick="setCat('W')" id="cat-W" class="pill">WOMEN</button>
+        </div>
+
+        <div class="nav-right">
+            <button onclick="setView('playdowns')" id="v-pla" class="icon-btn"><i class="ph ph-trophy"></i></button>
+            <button onclick="setView('matrix')" id="v-mat" class="icon-btn"><i class="ph ph-grid-four"></i></button>
+            <button onclick="setView('team')" id="v-tea" class="icon-btn"><i class="ph ph-users-three"></i></button>
+            <button onclick="setView('schedule')" id="v-sch" class="icon-btn active"><i class="ph ph-calendar-blank"></i></button>
+        </div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main id="view-container" class="app-body"></main>
+
+  <!-- BOTTOM NAV (for mobile) -->
+  <nav class="bottom-nav">
+    <button onclick="setView('schedule')" class="icon-btn"><i class="ph ph-calendar-blank"></i></button>
+    <button onclick="setView('team')" class="icon-btn"><i class="ph ph-users-three"></i></button>
+    <button onclick="setView('matrix')" class="icon-btn"><i class="ph ph-grid-four"></i></button>
+    <button onclick="setView('playdowns')" class="icon-btn"><i class="ph ph-trophy"></i></button>
+  </nav>
+
+  <script src="./scripts/app.js"></script>
+</body>
+</html>
