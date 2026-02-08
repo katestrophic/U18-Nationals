@@ -1238,5 +1238,12 @@
         }
       ]
     }
+  ],
+  "state":[
+    {"data": ""},
+    {"cat": "A"},
+    {"pinnedTeams":[]},
+    {"openMatches":[]},
+    {"scores":[]}
   ]
 }

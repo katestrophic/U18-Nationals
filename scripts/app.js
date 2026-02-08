@@ -1,12 +1,148 @@
-
-let state = { 
-    data: null, 
-    cat: 'A', 
-    view: 'schedule', 
-    openMatch: null,
-    pinnedTeams: JSON.parse(localStorage.getItem('pinnedTeams')) || [] 
+let state = {
+    data: "",               
+    cat: "A",                  
+    view: "schedule",
+    pinnedTeams: JSON.parse(localStorage.getItem('pinnedTeams')) || [],
+    openMatches: [],           
+    scores: []    
 };
 
+// ---------- Save State ----------
+function saveState() {
+    localStorage.setItem('tournamentState', JSON.stringify(state));
+}
+
+function savePinnedTeams() {
+    localStorage.setItem('pinnedTeams', JSON.stringify(state.pinnedTeams));
+}
+
+// ---------- Load Saved State ----------
+const savedState = localStorage.getItem('tournamentState');
+if (savedState) {
+    try {
+        const parsed = JSON.parse(savedState);
+        state = { ...state, ...parsed };
+    } catch(e) {
+        console.error("Error loading saved state:", e);
+    }
+}
+
+// ---------- Category / View ----------
+function setCategory(cat) {
+    state.cat = cat;
+    saveState();
+}
+
+function setCat(c) { 
+    state.cat = c; 
+    state.openMatch = null; 
+    saveState();
+    render(); 
+}
+
+function setView(v) { 
+    state.view = v; 
+    state.openMatch = null; 
+    saveState();
+    render(); 
+}
+
+// ---------- Matches ----------
+function openMatch(matchId) {
+    if (!state.openMatches.includes(matchId)) {
+        state.openMatches.push(matchId);
+        saveState();
+    }
+}
+
+function closeMatch(matchId) {
+    state.openMatches = state.openMatches.filter(id => id !== matchId);
+    saveState();
+}
+
+function setScore(matchId, score) {
+    const idx = state.scores.findIndex(s => s.matchId === matchId);
+    if (idx > -1) {
+        state.scores[idx] = { matchId, score };
+    } else {
+        state.scores.push({ matchId, score });
+    }
+    saveState();
+}
+
+function commitScore(drawId, sheet) {
+    const draw = state.data.draws.find(d => d.id === drawId);
+    const match = draw.matches.find(m => m.sheet === sheet);
+
+    match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
+    match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
+    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+
+    // Update scores array
+    const idx = state.scores.findIndex(s => s.drawId === drawId && s.sheet === sheet);
+    const scoreObj = { drawId, sheet, s1: match.s1, s2: match.s2, completed: match.completed };
+    if (idx > -1) state.scores[idx] = scoreObj;
+    else state.scores.push(scoreObj);
+
+    state.openMatch = null;
+    saveState();
+    render();
+}
+
+function toggleEditor(drawId, sheet) {
+    const key = `${drawId}-${sheet}`;
+    state.openMatch = state.openMatch === key ? null : key;
+    saveState();
+    render();
+}
+
+// ---------- Teams ----------
+function pinTeam(teamId) {
+    if (!state.pinnedTeams.includes(teamId)) {
+        state.pinnedTeams.push(teamId);
+        savePinnedTeams();
+        saveState();
+    }
+}
+
+function unpinTeam(teamId) {
+    state.pinnedTeams = state.pinnedTeams.filter(id => id !== teamId);
+    savePinnedTeams();
+    saveState();
+}
+
+function togglePin(teamId, event) {
+    if (event) event.stopPropagation();
+
+    if (state.pinnedTeams.includes(teamId)) {
+        state.pinnedTeams = state.pinnedTeams.filter(id => id !== teamId);
+    } else {
+        state.pinnedTeams.push(teamId);
+    }
+
+    savePinnedTeams();
+    saveState();
+    render();
+}
+
+function updateTeamColor(teamId, color) {
+    const team = getTeam(teamId);
+    if (team) {
+        team.color = color;
+        saveState();
+        render(); 
+    }
+}
+
+function updatePlaydownTeam(drawId, sheet, slot, teamId) {
+    const draw = state.data.draws.find(d => d.id === drawId);
+    const match = draw.matches.find(m => m.sheet === sheet);
+    match[slot] = teamId;
+    saveState();
+    render();
+}
+
+// ---------- Helpers ----------
 const isPinnedMatch = (m) => state.pinnedTeams.includes(m.t1) || state.pinnedTeams.includes(m.t2);
 const getTeam = (id) => state.data.teams.find(t => t.UTID === id);
 const getProvince = (upid) => state.data.provinces.find(p => p.UPID === upid)?.prov || '';
@@ -18,64 +154,6 @@ const getGenderClass = (id) => {
     return '';
 };
 
-
-function setCat(c) { 
-    state.cat = c; 
-    state.openMatch = null; 
-    render(); 
-}
-function setView(v) { 
-    state.view = v; 
-    state.openMatch = null; 
-    render(); 
-}
-
-
-function updateTeamColor(teamId, color) {
-    const team = getTeam(teamId);
-    if (team) {
-        team.color = color;
-        render(); 
-    }
-}
-function updatePlaydownTeam(drawId, sheet, slot, teamId) {
-    const draw = state.data.draws.find(d => d.id === drawId);
-    const match = draw.matches.find(m => m.sheet === sheet);
-    match[slot] = teamId;
-    render();
-}
-
-
-function commitScore(drawId, sheet) {
-    const draw = state.data.draws.find(d => d.id === drawId);
-    const match = draw.matches.find(m => m.sheet === sheet);
-    
-    match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
-    match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
-    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
-    
-    state.openMatch = null;
-    render();
-}
-
-
-function toggleEditor(drawId, sheet) {
-    const key = `${drawId}-${sheet}`;
-    state.openMatch = state.openMatch === key ? null : key;
-    render();
-}
-function togglePin(teamId, event) {
-    if (event) event.stopPropagation();
-
-    if (state.pinnedTeams.includes(teamId)) {
-        state.pinnedTeams = state.pinnedTeams.filter(id => id !== teamId);
-    } else {
-        state.pinnedTeams.push(teamId);
-    }
-
-    localStorage.setItem('pinnedTeams', JSON.stringify(state.pinnedTeams));
-    render();
-}
 function toggleDrawDate(header) {
     const content = header.nextElementSibling;
     if (content.style.display === 'none') {
@@ -87,7 +165,7 @@ function toggleDrawDate(header) {
     }
 }
 
-
+// ---------- Render Functions ----------
 function generateMatchRow(m, drawId) {
     const isOpen = state.openMatch === `${drawId}-${m.sheet}`;
     const t1 = getTeam(m.t1) || { tname: "TBD", color: "#ccc" };
@@ -133,7 +211,6 @@ function generateMatchRow(m, drawId) {
     </div>`;
 }
 
-
 function render() {
     const container = document.getElementById('view-container');
     if (!container) return;
@@ -161,11 +238,12 @@ function render() {
 
     if (window.innerWidth < 600) window.scrollTo(0, 0);
 }
+
+// ---------- Render Draw Schedule ----------
 function renderDrawSchedule(container) {
-    // Group draws by date (just the day part)
     const drawsByDate = {};
     state.data.draws.forEach(d => {
-        const date = d.time.split(',')[0]; // e.g., "Feb 8"
+        const date = d.time.split(',')[0];
         if (!drawsByDate[date]) drawsByDate[date] = [];
         drawsByDate[date].push(d);
     });
@@ -195,6 +273,8 @@ function renderDrawSchedule(container) {
         </div>`;
     }).join('');
 }
+
+// ---------- Render Team Schedule ----------
 function renderTeamSchedule(container) {
     const allTeams = state.data.teams.filter(
         t => state.cat === 'A' || t.UTID.startsWith(state.cat)
@@ -256,6 +336,8 @@ function renderTeamSchedule(container) {
         `;
     }).join('');
 }
+
+// ---------- Render Matrix ----------
 function renderMatrix(container) {
     const activePools = state.data.pools.filter(p => state.cat === 'A' || p.id.startsWith(state.cat));
     container.innerHTML = activePools.map(pool => {
@@ -306,6 +388,8 @@ function renderMatrix(container) {
         </div>`;
     }).join('');
 }
+
+// ---------- Render Playdown Editor ----------
 function renderPlaydownEditor(container) {
     const playdownDraws = state.data.draws.filter(d => d.id >= 15);
     if (!playdownDraws.length) {
@@ -348,7 +432,7 @@ function renderPlaydownEditor(container) {
     }).join('');
 }
 
-
+// ---------- Init ----------
 async function init() {
     try {
         const res = await fetch('userbase.json');
