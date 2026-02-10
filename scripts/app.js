@@ -390,12 +390,12 @@ function renderTeamSchedule(container) {
     return `
       <div class="team-group ${getGenderClass(t.UTID)}" style="margin-bottom:48px; padding-left:10px;">
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:2px solid ${t.color || '#eee'}; padding-bottom:8px;">
-          <button onclick="togglePin('${t.UTID}', event)" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:${isPinned ? 'var(--accent)' : '#ccc'}">
-            <i class="${isPinned ? 'ph-fill' : 'ph'} ph-push-pin"></i>
-          </button>
-          <img src="${getFlag(t.UTID)}" class="flag-icon" style="width:24px;">
+          <img src="${getFlag(t.UTID)}" class="flag-icon" style="width:40px;">
           <h2 style="margin:0;font-size:1rem;color:${t.color || 'inherit'};flex-grow:1;">${t.tname}</h2>
           <input type="color" value="${t.color || '#0f172a'}" onchange="updateTeamColor('${t.UTID}', this.value)">
+          <button onclick="togglePin('${t.UTID}', event)" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:${isPinned ? 'var(--accent)' : '#ccc'}">
+            <i class="${isPinned ? 'ph-fill' : 'ph'} ph-push-pin"></i>
+          </button>
         </div>
         ${matches.map(m => generateMatchRow(m, m.drawId, true)).join('')}
       </div>`;
@@ -411,43 +411,65 @@ function renderMatrix(container) {
       <div class="pool-container" style="margin-bottom:50px;">
         <div style="background:${headerColor}; color:white; padding:12px 20px; border-radius:8px 8px 0 0; font-weight:800; display:flex; justify-content:space-between;">
           <span>${p.name.toUpperCase()}</span>
-          <span style="font-size:0.7rem; opacity:0.8;">ROUND RR</span>
+          <span style="font-size:0.7rem; opacity:0.8;">RR</span>
         </div>
         <div style="overflow-x:auto; border:1px solid var(--border); border-top:none; border-radius:0 0 8px 8px;">
-          <table style="width:100%; border-collapse:collapse; background:white; font-size:0.85rem;">
+          <table style="width:100%; border-collapse:collapse; background:white; font-size:1rem; table-layout: fixed;">
             <thead>
               <tr style="background:var(--surface);">
-                <th style="text-align:left; padding:12px; border-bottom:2px solid var(--border); width:180px;">Team</th>
-                ${poolTeams.map((_, i) => `<th style="width:40px; text-align:center; border-left:1px solid var(--border); border-bottom:2px solid var(--border);">${i + 1}</th>`).join('')}
-                <th style="width:60px; text-align:center; background:#eef2f7; border-bottom:2px solid var(--border);">W-L</th>
+                <th style="width: 120px; text-align:center; border-bottom:2px solid var(--border);">Team (W-L)</th>
+                ${poolTeams.map((_, i) => `<th style="min-width:60px; text-align:center; border-bottom:2px solid var(--border);">
+                  <img src="${getFlag(poolTeams[i].UTID)}" class="flag-icon" style="width:5vw; max-width:50px;">
+                </th>`).join('')}
               </tr>
             </thead>
             <tbody>
               ${poolTeams.map((t, i) => {
-      let w = 0, l = 0;
-      const cells = poolTeams.map((opp, j) => {
-        if (i === j) return `<td style="background:#e2e8f0; border-left:1px solid var(--border);"></td>`;
-        const m = state.data.draws.flatMap(d => d.matches)
-          .find(match => match.completed &&
-            ((match.t1 === t.UTID && match.t2 === opp.UTID) ||
-              (match.t1 === opp.UTID && match.t2 === t.UTID))
-          );
-        if (!m) return `<td style="border-left:1px solid var(--border); text-align:center; color:#cbd5e1;">-</td>`;
-        const won = (m.t1 === t.UTID) ? (m.s1 > m.s2) : (m.s2 > m.s1);
-        won ? w++ : l++;
-        return `<td style="border-left:1px solid var(--border); text-align:center; font-weight:800; color:${won ? 'var(--success)' : '#ef4444'};">${won ? 'W' : 'L'}</td>`;
-      }).join('');
-      return `<tr style="border-bottom:1px solid var(--border);">
-                  <td style="padding:10px; font-weight:600;">${t.tname}</td>${cells}
-                  <td style="text-align:center; font-weight:900; background:var(--surface); border-left:1px solid var(--border);">${w}-${l}</td>
+        let w = 0, l = 0;
+        const cells = poolTeams.map((opp, j) => {
+          if (i === j) return `<td style="background:#e2e8f0; border-right:1px solid var(--border);"></td>`;
+          const m = state.data.draws.flatMap(d => d.matches)
+            .find(match => match.completed &&
+              ((match.t1 === t.UTID && match.t2 === opp.UTID) ||
+               (match.t1 === opp.UTID && match.t2 === t.UTID))
+            );
+          if (!m) return `<td style="border-right:1px solid var(--border); text-align:center; color:#cbd5e1;">-</td>`;
+          const won = (m.t1 === t.UTID) ? (m.s1 > m.s2) : (m.s2 > m.s1);
+          won ? w++ : l++;
+          return `<td style="border-right:1px solid var(--border); text-align:center; font-weight:800; color:${won ? 'var(--success)' : '#ef4444'};">${won ? 'W' : 'L'}</td>`;
+        }).join('');
+
+        // Left column: team name + W-L over the flag, fixed width
+        const skipName = (t.tname.match(/\(([^)]+)\)/) || [])[1] || t.tname;
+        return `<tr style="border-bottom:1px solid var(--border);">
+                  <td style="
+                    width:120px;
+                    font-weight: 1000;
+                    color:white;
+                    -webkit-text-stroke: 1px black;
+                    text-align:center;
+                    background: url('${getFlag(t.UTID)}');
+                    background-size:contain;
+                    background-repeat:no-repeat;
+                    background-position:center;
+                    height:70px;
+                    opacity: 0.5;
+                    vertical-align:middle;
+                    font-size:1rem;
+                    line-height:1.2rem;
+                  ">
+                    ${skipName}<br>${w}-${l}
+                  </td>
+                  ${cells}
                 </tr>`;
-    }).join('')}
+      }).join('')}
             </tbody>
           </table>
         </div>
       </div>`;
   }).join('');
 }
+
 function renderPlaydownEditor(container) {
   const playdownDraws = state.data.draws.filter(d => d.id >= 15);
   if (!playdownDraws.length) {
@@ -552,11 +574,11 @@ function renderStandings(container) {
 }
 
 function liveUpdateScore(drawId, sheet) {
-    const s1 = document.getElementById(`s1-${drawId}-${sheet}`).value;
-    const s2 = document.getElementById(`s2-${drawId}-${sheet}`).value;
-    const completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+  const s1 = document.getElementById(`s1-${drawId}-${sheet}`).value;
+  const s2 = document.getElementById(`s2-${drawId}-${sheet}`).value;
+  const completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
 
-    updateMatch(drawId, sheet, s1, s2, completed);
+  updateMatch(drawId, sheet, s1, s2, completed);
 }
 
 function render() {
