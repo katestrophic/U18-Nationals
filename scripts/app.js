@@ -1,4 +1,6 @@
 let liveUpdateTimer = null;
+let renderDebounceTimer = null;
+let commitDebounceTimer = null;
 let state = {
   data: null,
   cat: localStorage.getItem('lastCat') || "A",
@@ -31,7 +33,8 @@ const getGenderClass = (id) => {
   return id.startsWith('M') ? 'gender-M' : (id.startsWith('W') ? 'gender-W' : '');
 };
 
-// Save State ----------
+
+// CRUD ----------
 function saveState() {
   localStorage.setItem('tournamentState', JSON.stringify({
     cat: state.cat,
@@ -41,10 +44,6 @@ function saveState() {
     foldedDates: state.foldedDates,
     foldedDraws: state.foldedDraws
   }));
-
-  if (state.data) {
-    localStorage.setItem('curlingDB', JSON.stringify(state.data));
-  }
 }
 function savePinnedTeams() {
   localStorage.setItem('pinnedTeams', JSON.stringify(state.pinnedTeams));
@@ -78,8 +77,6 @@ async function syncToFileSystem() {
   }
 }
 
-
-// Load Saved State ----------
 function importDatabase(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -89,7 +86,6 @@ function importDatabase(event) {
     try {
       const importedData = JSON.parse(e.target.result);
       state.data = importedData;
-      saveState();
       render();
       alert("Database Updated Successfully!");
     } catch (err) {
@@ -99,7 +95,7 @@ function importDatabase(event) {
   reader.readAsText(file);
 }
 function exportDatabase() {
-  if (!state.data) return alert("No data to save!");
+  if (!state.data) return alert("No data to export!");
   const dataStr = JSON.stringify(state.data, null, 4);
   const blob = new Blob([dataStr], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -234,6 +230,56 @@ function toggleDrawDate(header) {
   localStorage.setItem('foldedDates', JSON.stringify(state.foldedDates));
 }
 
+function updateFoldStates(drawId, date) {
+  const draw = state.data.draws.find(d => d.id === drawId);
+  if (!draw) return;
+
+  const drawKey = `${date}__${drawId}`;
+  // Auto-fold draw only if not manually toggled
+  if (!(drawKey in state.foldedDraws)) {
+    state.foldedDraws[drawKey] = draw.matches.every(m => m.completed);
+  }
+
+  // Auto-fold date only if not manually toggled
+  if (!(date in state.foldedDates)) {
+    const drawsForDate = state.data.draws.filter(d => d.time.split(',')[0] === date);
+    state.foldedDates[date] = drawsForDate.every(d => d.matches.every(m => m.completed));
+  }
+}
+function updateScoresArray(drawId, sheet, s1, s2, completed) {
+  const idx = state.scores.findIndex(s => s.drawId === drawId && s.sheet === sheet);
+  const scoreObj = { drawId, sheet, s1, s2, completed };
+
+  if (idx > -1) state.scores[idx] = scoreObj;
+  else state.scores.push(scoreObj);
+}
+function commitScore(drawId, sheet) {
+    const draw = state.data.draws.find(d => d.id === drawId);
+    if (!draw) return;
+
+    const match = draw.matches.find(m => m.sheet === sheet);
+    if (!match) return;
+
+    // Prevent negative scores
+    match.s1 = Math.max(0, parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0);
+    match.s2 = Math.max(0, parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0);
+    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+
+    const date = draw.time.split(',')[0];
+    updateScoresArray(drawId, sheet, match.s1, match.s2, match.completed);
+    updateFoldStates(drawId, date);
+
+    state.openMatch = null;
+
+    // Debounce saving to localStorage and file system
+    clearTimeout(commitDebounceTimer);
+    commitDebounceTimer = setTimeout(() => {
+        saveState();
+        syncToFileSystem();
+        render(); // render after save
+    }, 150); // wait 150ms of inactivity before committing
+}
+
 
 // Render Functions ----------
 function generateMatchRow(m, drawId, showTime = false) {
@@ -242,9 +288,9 @@ function generateMatchRow(m, drawId, showTime = false) {
   const t2 = getTeam(m.t2) || { tname: "TBD", color: "#ccc" };
 
   return `
-    <div class="match-row ${getGenderClass(m.t1)}">
+    <div class="match-row ${getGenderClass(m.t1)}" data-draw="${drawId}" data-sheet="${m.sheet}">
         ${showTime ? `<div style="font-size:0.65rem; font-weight:800; color:var(--text-dim); margin-bottom:4px; padding-left:45px;">${m.time}</div>` : ''}
-        
+
         <div class="match-summary" onclick="toggleEditor(${drawId}, '${m.sheet}')">
             <span class="sheet-label" style="color:var(--accent); font-weight:900;">${m.sheet}</span>
             <div class="t1-col">
@@ -257,6 +303,7 @@ function generateMatchRow(m, drawId, showTime = false) {
                 ${m.t2 !== 'TBD' ? `<img src="${getFlag(m.t2)}" class="flag-icon" style="width:20px;">` : ''}
             </div>
         </div>
+
         ${isOpen ? `
         <div class="inline-editor">
             <div style="display:flex; justify-content:center; gap:15px; margin-bottom:20px;">
@@ -283,29 +330,29 @@ function renderDrawSchedule(container) {
     return `
       <div class="draw-date-group">
         ${(() => {
-          // Determine if all draws on this date are complete
-          const autoFold = draws.every(d => d.matches.every(m => m.completed));
-          const isFolded = state.foldedDates[date] ?? autoFold;
-          const indicator = isFolded ? '▶' : '▼';
+        // Determine if all draws on this date are complete
+        const autoFold = draws.every(d => d.matches.every(m => m.completed));
+        const isFolded = state.foldedDates[date] ?? autoFold;
+        const indicator = isFolded ? '▶' : '▼';
 
-          return `
+        return `
             <div class="date-header" data-date="${date}" onclick="toggleDrawDate(this)">
               <span class="toggle-indicator">${indicator}</span> ${date}
             </div>
             <div class="date-content" style="display:${isFolded ? 'none' : 'block'};">
           `;
-        })()}
+      })()}
 
         ${draws.map(d => {
-          const matches = d.matches.filter(m => state.cat === 'A' || (m.t1 && m.t1.startsWith(state.cat)));
-          if (!matches.length) return '';
-          const drawKey = `${date}__${d.id}`;
-          
-          // Auto-fold if ALL matches in the draw are complete
-          const isDrawFolded = state.foldedDraws[drawKey] ?? d.matches.every(m => m.completed);
-          const drawIndicator = isDrawFolded ? '▶' : '▼';
+        const matches = d.matches.filter(m => state.cat === 'A' || (m.t1 && m.t1.startsWith(state.cat)));
+        if (!matches.length) return '';
+        const drawKey = `${date}__${d.id}`;
 
-          return `
+        // Auto-fold if ALL matches in the draw are complete
+        const isDrawFolded = state.foldedDraws[drawKey] ?? d.matches.every(m => m.completed);
+        const drawIndicator = isDrawFolded ? '▶' : '▼';
+
+        return `
             <div class="draw-group">
               <div class="draw-header"
                    data-draw-key="${drawKey}"
@@ -319,7 +366,7 @@ function renderDrawSchedule(container) {
                 ${matches.map(m => generateMatchRow(m, d.id)).join('')}
               </div>
             </div>`;
-        }).join('')}
+      }).join('')}
       </div>`;
   }).join('');
 }
@@ -337,7 +384,7 @@ function renderTeamSchedule(container) {
 
     const matches = state.data.draws.flatMap(d =>
       d.matches.filter(m => m.t1 === t.UTID || m.t2 === t.UTID)
-               .map(m => ({ ...m, drawId: d.id, time: d.time }))
+        .map(m => ({ ...m, drawId: d.id, time: d.time }))
     ).sort((a, b) => a.drawId - b.drawId);
 
     return `
@@ -371,30 +418,30 @@ function renderMatrix(container) {
             <thead>
               <tr style="background:var(--surface);">
                 <th style="text-align:left; padding:12px; border-bottom:2px solid var(--border); width:180px;">Team</th>
-                ${poolTeams.map((_, i) => `<th style="width:40px; text-align:center; border-left:1px solid var(--border); border-bottom:2px solid var(--border);">${i+1}</th>`).join('')}
+                ${poolTeams.map((_, i) => `<th style="width:40px; text-align:center; border-left:1px solid var(--border); border-bottom:2px solid var(--border);">${i + 1}</th>`).join('')}
                 <th style="width:60px; text-align:center; background:#eef2f7; border-bottom:2px solid var(--border);">W-L</th>
               </tr>
             </thead>
             <tbody>
               ${poolTeams.map((t, i) => {
-                let w = 0, l = 0;
-                const cells = poolTeams.map((opp, j) => {
-                  if (i === j) return `<td style="background:#e2e8f0; border-left:1px solid var(--border);"></td>`;
-                  const m = state.data.draws.flatMap(d => d.matches)
-                              .find(match => match.completed &&
-                                ((match.t1 === t.UTID && match.t2 === opp.UTID) ||
-                                 (match.t1 === opp.UTID && match.t2 === t.UTID))
-                              );
-                  if (!m) return `<td style="border-left:1px solid var(--border); text-align:center; color:#cbd5e1;">-</td>`;
-                  const won = (m.t1 === t.UTID) ? (m.s1 > m.s2) : (m.s2 > m.s1);
-                  won ? w++ : l++;
-                  return `<td style="border-left:1px solid var(--border); text-align:center; font-weight:800; color:${won ? 'var(--success)' : '#ef4444'};">${won ? 'W' : 'L'}</td>`;
-                }).join('');
-                return `<tr style="border-bottom:1px solid var(--border);">
+      let w = 0, l = 0;
+      const cells = poolTeams.map((opp, j) => {
+        if (i === j) return `<td style="background:#e2e8f0; border-left:1px solid var(--border);"></td>`;
+        const m = state.data.draws.flatMap(d => d.matches)
+          .find(match => match.completed &&
+            ((match.t1 === t.UTID && match.t2 === opp.UTID) ||
+              (match.t1 === opp.UTID && match.t2 === t.UTID))
+          );
+        if (!m) return `<td style="border-left:1px solid var(--border); text-align:center; color:#cbd5e1;">-</td>`;
+        const won = (m.t1 === t.UTID) ? (m.s1 > m.s2) : (m.s2 > m.s1);
+        won ? w++ : l++;
+        return `<td style="border-left:1px solid var(--border); text-align:center; font-weight:800; color:${won ? 'var(--success)' : '#ef4444'};">${won ? 'W' : 'L'}</td>`;
+      }).join('');
+      return `<tr style="border-bottom:1px solid var(--border);">
                   <td style="padding:10px; font-weight:600;">${t.tname}</td>${cells}
                   <td style="text-align:center; font-weight:900; background:var(--surface); border-left:1px solid var(--border);">${w}-${l}</td>
                 </tr>`;
-              }).join('')}
+    }).join('')}
             </tbody>
           </table>
         </div>
@@ -445,25 +492,25 @@ function renderPlaydownEditor(container) {
 function renderStandings(container) {
   function buildStandingsTable(title, teams) {
     const rows = teams.map(t => {
-      let games=0, wins=0, losses=0, pf=0, pa=0;
+      let games = 0, wins = 0, losses = 0, pf = 0, pa = 0;
       state.data.draws.forEach(d => d.matches.forEach(m => {
         if (!m.completed) return;
-        if (m.t1===t.UTID || m.t2===t.UTID){
+        if (m.t1 === t.UTID || m.t2 === t.UTID) {
           games++;
-          const isT1 = m.t1===t.UTID;
+          const isT1 = m.t1 === t.UTID;
           pf += isT1 ? m.s1 : m.s2;
           pa += isT1 ? m.s2 : m.s1;
-          isT1 ? (m.s1>m.s2 ? wins++ : losses++) : (m.s2>m.s1 ? wins++ : losses++);
+          isT1 ? (m.s1 > m.s2 ? wins++ : losses++) : (m.s2 > m.s1 ? wins++ : losses++);
         }
       }));
-      return { t, games, wins, losses, pf, pa, diff: pf-pa };
+      return { t, games, wins, losses, pf, pa, diff: pf - pa };
     });
 
-    rows.sort((a,b) => b.wins - a.wins || b.diff - a.diff || b.pf - a.pf);
+    rows.sort((a, b) => b.wins - a.wins || b.diff - a.diff || b.pf - a.pf);
 
     return `
       <div style="margin-bottom:50px;">
-        <div style="font-weight:900;font-size:0.9rem;margin-bottom:12px;color:${title.startsWith('MEN')?'var(--accent-blue)':'var(--accent)'};border-bottom:2px solid var(--border);padding-bottom:6px;">
+        <div style="font-weight:900;font-size:0.9rem;margin-bottom:12px;color:${title.startsWith('MEN') ? 'var(--accent-blue)' : 'var(--accent)'};border-bottom:2px solid var(--border);padding-bottom:6px;">
           ${title}
         </div>
         <div style="overflow-x:auto;">
@@ -481,16 +528,16 @@ function renderStandings(container) {
               </tr>
             </thead>
             <tbody>
-              ${rows.map((r,i) => `
-                <tr style="border-bottom:1px solid var(--border); background:${state.pinnedTeams.includes(r.t.UTID)?'rgba(56,189,248,0.08)':'transparent'}">
+              ${rows.map((r, i) => `
+                <tr style="border-bottom:1px solid var(--border); background:${state.pinnedTeams.includes(r.t.UTID) ? 'rgba(56,189,248,0.08)' : 'transparent'}">
                   <td style="padding:10px; width:40px; text-align:center;"><img src="${getFlag(r.t.UTID)}" style="width:30px;"></td>
-                  <td style="padding:6px; max-width:200px; font-weight:700; color:${r.t.color || '#0f172a'};">${i+1}. ${r.t.tname}</td>
+                  <td style="padding:6px; max-width:200px; font-weight:700; color:${r.t.color || '#0f172a'};">${i + 1}. ${r.t.tname}</td>
                   <td style="text-align:center;">${r.games}</td>
                   <td style="text-align:center; font-weight:800; color:var(--success);">${r.wins}</td>
                   <td style="text-align:center; font-weight:800; color:#ef4444;">${r.losses}</td>
                   <td style="text-align:center;">${r.pf}</td>
                   <td style="text-align:center;">${r.pa}</td>
-                  <td style="text-align:center; font-weight:800;">${r.diff>0?'+':''}${r.diff}</td>
+                  <td style="text-align:center; font-weight:800;">${r.diff > 0 ? '+' : ''}${r.diff}</td>
                 </tr>`).join('')}
             </tbody>
           </table>
@@ -505,33 +552,42 @@ function renderStandings(container) {
 }
 
 function liveUpdateScore(drawId, sheet) {
-  const draw = state.data.draws.find(d => d.id === drawId);
-  if (!draw) return;
+    const draw = state.data.draws.find(d => d.id === drawId);
+    if (!draw) return;
 
-  const match = draw.matches.find(m => m.sheet === sheet);
-  if (!match) return;
+    const match = draw.matches.find(m => m.sheet === sheet);
+    if (!match) return;
 
-  match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
-  match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
-  match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+    // Prevent negative scores
+    match.s1 = Math.max(0, parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0);
+    match.s2 = Math.max(0, parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0);
+    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
 
-  // sync to scores array
-  const idx = state.scores.findIndex(
-    s => s.drawId === drawId && s.sheet === sheet
+    const date = draw.time.split(',')[0];
+
+    updateScoresArray(drawId, sheet, match.s1, match.s2, match.completed);
+    updateFoldStates(drawId, date);
+
+    // Debounce localStorage writes
+    clearTimeout(liveUpdateTimer);
+    liveUpdateTimer = setTimeout(() => saveState(), 300);
+
+    // Debounce render so fast typing doesn't re-render every keystroke
+    clearTimeout(renderDebounceTimer);
+    renderDebounceTimer = setTimeout(() => {
+        const row = document.querySelector(`.match-row[data-draw="${drawId}"][data-sheet="${sheet}"]`);
+        if (row) {
+            // Update only the score pill and completed class (no flicker)
+            const pill = row.querySelector('.score-pill');
+            if (pill) {
+                pill.textContent = `${match.s1} — ${match.s2}`;
+                pill.classList.toggle('complete', match.completed);
+            }
+        } else {
+            render();
+        }
+    }, 100
   );
-
-  const scoreObj = { drawId, sheet, ...match };
-
-  if (idx > -1) state.scores[idx] = scoreObj;
-  else state.scores.push(scoreObj);
-
-  // debounce localStorage writes
-  clearTimeout(liveUpdateTimer);
-  liveUpdateTimer = setTimeout(() => {
-    saveState();
-  }, 300);
-
-  render(); // live update UI
 }
 
 function render() {
@@ -566,33 +622,27 @@ function render() {
 
 // Initialization ----------
 async function init() {
-  // 1. Try loading from LocalStorage first (The "Single Location")
-  const savedDB = localStorage.getItem('curlingDB');
-  const savedMeta = localStorage.getItem('tournamentState');
-
-  if (savedDB) {
-    state.data = JSON.parse(savedDB);
-    console.log("Loaded from local memory");
-  } else {
-    // 2. Fallback to the original file
-    try {
-      const res = await fetch('userbase.json');
-      state.data = await res.json();
-      console.log("Loaded from userbase.json file");
-    } catch (err) {
-      console.error("Data load failed:", err);
-    }
+  try {
+    const res = await fetch('userbase.json');
+    state.data = await res.json();
+    console.log("Loaded from userbase.json file");
+  } catch (err) {
+    console.error("Data load failed:", err);
   }
 
-  // Load metadata if it exists
+  const savedMeta = localStorage.getItem('tournamentState');
   if (savedMeta) {
     const meta = JSON.parse(savedMeta);
     state.cat = meta.cat || state.cat;
     state.view = meta.view || state.view;
+    state.scores = meta.scores || [];
+    state.openMatches = meta.openMatches || [];
+    state.foldedDates = meta.foldedDates || {};
+    state.foldedDraws = meta.foldedDraws || {};
+    state.pinnedTeams = JSON.parse(localStorage.getItem('pinnedTeams')) || [];
   }
 
   render();
 }
-
 
 init();
