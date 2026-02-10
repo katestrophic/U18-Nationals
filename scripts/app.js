@@ -254,30 +254,30 @@ function updateScoresArray(drawId, sheet, s1, s2, completed) {
   else state.scores.push(scoreObj);
 }
 function commitScore(drawId, sheet) {
-    const draw = state.data.draws.find(d => d.id === drawId);
-    if (!draw) return;
+  const draw = state.data.draws.find(d => d.id === drawId);
+  if (!draw) return;
 
-    const match = draw.matches.find(m => m.sheet === sheet);
-    if (!match) return;
+  const match = draw.matches.find(m => m.sheet === sheet);
+  if (!match) return;
 
-    // Prevent negative scores
-    match.s1 = Math.max(0, parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0);
-    match.s2 = Math.max(0, parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0);
-    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+  // Prevent negative scores
+  match.s1 = Math.max(0, parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0);
+  match.s2 = Math.max(0, parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0);
+  match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
 
-    const date = draw.time.split(',')[0];
-    updateScoresArray(drawId, sheet, match.s1, match.s2, match.completed);
-    updateFoldStates(drawId, date);
+  const date = draw.time.split(',')[0];
+  updateScoresArray(drawId, sheet, match.s1, match.s2, match.completed);
+  updateFoldStates(drawId, date);
 
-    state.openMatch = null;
+  state.openMatch = null;
 
-    // Debounce saving to localStorage and file system
-    clearTimeout(commitDebounceTimer);
-    commitDebounceTimer = setTimeout(() => {
-        saveState();
-        syncToFileSystem();
-        render(); // render after save
-    }, 150); // wait 150ms of inactivity before committing
+  // Debounce saving to localStorage and file system
+  clearTimeout(commitDebounceTimer);
+  commitDebounceTimer = setTimeout(() => {
+    saveState();
+    syncToFileSystem();
+    render(); // render after save
+  }, 150); // wait 150ms of inactivity before committing
 }
 
 
@@ -552,42 +552,11 @@ function renderStandings(container) {
 }
 
 function liveUpdateScore(drawId, sheet) {
-    const draw = state.data.draws.find(d => d.id === drawId);
-    if (!draw) return;
+    const s1 = document.getElementById(`s1-${drawId}-${sheet}`).value;
+    const s2 = document.getElementById(`s2-${drawId}-${sheet}`).value;
+    const completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
 
-    const match = draw.matches.find(m => m.sheet === sheet);
-    if (!match) return;
-
-    // Prevent negative scores
-    match.s1 = Math.max(0, parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0);
-    match.s2 = Math.max(0, parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0);
-    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
-
-    const date = draw.time.split(',')[0];
-
-    updateScoresArray(drawId, sheet, match.s1, match.s2, match.completed);
-    updateFoldStates(drawId, date);
-
-    // Debounce localStorage writes
-    clearTimeout(liveUpdateTimer);
-    liveUpdateTimer = setTimeout(() => saveState(), 300);
-
-    // Debounce render so fast typing doesn't re-render every keystroke
-    clearTimeout(renderDebounceTimer);
-    renderDebounceTimer = setTimeout(() => {
-        const row = document.querySelector(`.match-row[data-draw="${drawId}"][data-sheet="${sheet}"]`);
-        if (row) {
-            // Update only the score pill and completed class (no flicker)
-            const pill = row.querySelector('.score-pill');
-            if (pill) {
-                pill.textContent = `${match.s1} — ${match.s2}`;
-                pill.classList.toggle('complete', match.completed);
-            }
-        } else {
-            render();
-        }
-    }, 100
-  );
+    updateMatch(drawId, sheet, s1, s2, completed);
 }
 
 function render() {
