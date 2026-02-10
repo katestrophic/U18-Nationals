@@ -1,122 +1,132 @@
 let state = {
-    data: null, // Initialized as null to check if we need to fetch
-    cat: localStorage.getItem('lastCat') || "A",
-    view: localStorage.getItem('lastView') || "schedule",
-    pinnedTeams: JSON.parse(localStorage.getItem('pinnedTeams')) || [],
-    openMatches: [],
-    openMatch: null, // Used for the inline editor toggle
-    scores: []
+  data: null,
+  cat: localStorage.getItem('lastCat') || "A",
+  view: localStorage.getItem('lastView') || "schedule",
+  pinnedTeams: JSON.parse(localStorage.getItem('pinnedTeams')) || [],
+  openMatches: [],
+  openMatch: null,
+  scores: [],
+  foldedDates: JSON.parse(localStorage.getItem('foldedDates')) || {}
 };
 
 let liveUpdateTimer = null;
 
-// ---------- Save State ----------
+// Save State ----------
 function saveState() {
-    // Save the metadata (view, category, etc)
-    localStorage.setItem('tournamentState', JSON.stringify({
-        cat: state.cat,
-        view: state.view,
-        openMatches: state.openMatches,
-        scores: state.scores
-    }));
-    // Save the actual tournament data (the "Single Location" data)
-    if (state.data) {
-        localStorage.setItem('curlingDB', JSON.stringify(state.data));
-    }
+  localStorage.setItem('tournamentState', JSON.stringify({
+    cat: state.cat,
+    view: state.view,
+    openMatches: state.openMatches,
+    scores: state.scores,
+    foldedDates: state.foldedDates
+  }));
+
+  if (state.data) {
+    localStorage.setItem('curlingDB', JSON.stringify(state.data));
+  }
 }
 function savePinnedTeams() {
-    localStorage.setItem('pinnedTeams', JSON.stringify(state.pinnedTeams));
+  localStorage.setItem('pinnedTeams', JSON.stringify(state.pinnedTeams));
 }
-// --- The New Save Function ---
+
 async function syncToFileSystem() {
-    try {
-        // NOTE: Use 'localhost' on PC. 
-        // Use your computer's IP (e.g. 192.168.1.50) if saving from iPhone.
-        await fetch('http://localhost:3000/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(state.data) 
-        });
-    } catch (e) {
-        console.warn("Local server not detected. Saved to browser memory only.");
-    }
+  try {
+    await fetch('http://localhost:3000/save', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(state.data)
+    });
+  } catch (e) {
+    console.warn("Local server not detected. Saved to browser memory only.");
+  }
 }
 
 function commitScore(drawId, sheet) {
-    const draw = state.data.draws.find(d => d.id === drawId);
-    const match = draw.matches.find(m => m.sheet === sheet);
+  const draw = state.data.draws.find(d => d.id === drawId);
+  const match = draw.matches.find(m => m.sheet === sheet);
 
-    // 1. Update the data in the app
-    match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
-    match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
-    match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+  // 1. Update the data in the app
+  match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
+  match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
+  match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
 
-    // 2. Clear editor and update UI
-    state.openMatch = null;
-    render();
+  // 2. Clear editor and update UI
+  state.openMatch = null;
+  render();
 
-    // 3. Persist data
-    saveState();         // Save to browser LocalStorage (safety backup)
-    syncToFileSystem();  // Send to computer to update userbase.json
+  // 3. Persist data
+  saveState();         // Save to browser LocalStorage (safety backup)
+  syncToFileSystem();  // Send to computer to update userbase.json
 }
-// ---------- Load Saved State ----------
+
+
+// Load Saved State ----------
 const savedState = localStorage.getItem('tournamentState');
 if (savedState) {
   try {
     const parsed = JSON.parse(savedState);
     state = { ...state, ...parsed };
+    state.foldedDates = parsed.foldedDates || {};
   } catch (e) {
     console.error("Error loading saved state:", e);
   }
 }
-function importDatabase(event) {
-    const file = event.target.files[0];
-    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const importedData = JSON.parse(e.target.result);
-            state.data = importedData;
-            saveState();
-            render();
-            alert("Database Updated Successfully!");
-        } catch (err) {
-            alert("Invalid JSON file. Please check the file format.");
-        }
-    };
-    reader.readAsText(file);
+function importDatabase(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const importedData = JSON.parse(e.target.result);
+      state.data = importedData;
+      saveState();
+      render();
+      alert("Database Updated Successfully!");
+    } catch (err) {
+      alert("Invalid JSON file. Please check the file format.");
+    }
+  };
+  reader.readAsText(file);
 }
 function exportDatabase() {
-    if (!state.data) return alert("No data to save!");
-    const dataStr = JSON.stringify(state.data, null, 4);
-    const blob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'userbase.json';
-    a.click();
-    URL.revokeObjectURL(url);
+  if (!state.data) return alert("No data to save!");
+  const dataStr = JSON.stringify(state.data, null, 4);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'userbase.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function isPastDate(dateStr) {
+  const year = 2026;
+  const d = new Date(`${dateStr} ${year}`);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
 }
 
 
-
-// ---------- Category / View ----------
+// Category / View ----------
 function setCategory(cat) {
   state.cat = cat;
   saveState();
 }
-function setCat(c) { 
-    state.cat = c; 
-    localStorage.setItem('lastCat', c);
-    saveState();
-    render(); 
+function setCat(c) {
+  state.cat = c;
+  localStorage.setItem('lastCat', c);
+  saveState();
+  render();
 }
-function setView(v) { 
-    state.view = v; 
-    localStorage.setItem('lastView', v);
-    saveState();
-    render(); 
+function setView(v) {
+  state.view = v;
+  localStorage.setItem('lastView', v);
+  saveState();
+  render();
 }
 function setScore(matchId, score) {
   const idx = state.scores.findIndex(s => s.matchId === matchId);
@@ -129,24 +139,25 @@ function setScore(matchId, score) {
 }
 
 
-// ---------- Matches ----------
+// Matches ----------
 function openMatch(matchId) {
   if (!state.openMatches.includes(matchId)) {
     state.openMatches.push(matchId);
     saveState();
   }
 }
-
 function closeMatch(matchId) {
   state.openMatches = state.openMatches.filter(id => id !== matchId);
   saveState();
 }
 function toggleEditor(drawId, sheet) {
-    const key = `${drawId}-${sheet}`;
-    state.openMatch = state.openMatch === key ? null : key;
-    render();
+  const key = `${drawId}-${sheet}`;
+  state.openMatch = state.openMatch === key ? null : key;
+  render();
 }
-// ---------- Teams ----------
+
+
+// Teams ----------
 function pinTeam(teamId) {
   if (!state.pinnedTeams.includes(teamId)) {
     state.pinnedTeams.push(teamId);
@@ -154,31 +165,29 @@ function pinTeam(teamId) {
     saveState();
   }
 }
-
 function unpinTeam(teamId) {
   state.pinnedTeams = state.pinnedTeams.filter(id => id !== teamId);
   savePinnedTeams();
   saveState();
 }
-
 function togglePin(teamId, event) {
-    if (event) event.stopPropagation();
-    if (state.pinnedTeams.includes(teamId)) {
-        state.pinnedTeams = state.pinnedTeams.filter(id => id !== teamId);
-    } else {
-        state.pinnedTeams.push(teamId);
-    }
-    savePinnedTeams();
-    render();
+  if (event) event.stopPropagation();
+  if (state.pinnedTeams.includes(teamId)) {
+    state.pinnedTeams = state.pinnedTeams.filter(id => id !== teamId);
+  } else {
+    state.pinnedTeams.push(teamId);
+  }
+  savePinnedTeams();
+  render();
 }
 
 function updateTeamColor(teamId, color) {
-    const team = getTeam(teamId);
-    if (team) {
-        team.color = color;
-        saveState();
-        render(); 
-    }
+  const team = getTeam(teamId);
+  if (team) {
+    team.color = color;
+    saveState();
+    render();
+  }
 }
 function updatePlaydownTeam(drawId, sheet, slot, teamId) {
   const draw = state.data.draws.find(d => d.id === drawId);
@@ -188,13 +197,13 @@ function updatePlaydownTeam(drawId, sheet, slot, teamId) {
   render();
 }
 
-// ---------- Helpers ----------
+// Helpers ----------
 const isPinnedMatch = (m) => state.pinnedTeams.includes(m.t1) || state.pinnedTeams.includes(m.t2);
 const getTeam = (id) => state.data?.teams.find(t => t.UTID === id);
 const getFlag = (id) => `./assets/flags/canada/${getTeam(id)?.UPID.toLowerCase()}_flag.png`;
 const getGenderClass = (id) => {
-    if (!id || id === 'TBD') return '';
-    return id.startsWith('M') ? 'gender-M' : (id.startsWith('W') ? 'gender-W' : '');
+  if (!id || id === 'TBD') return '';
+  return id.startsWith('M') ? 'gender-M' : (id.startsWith('W') ? 'gender-W' : '');
 };
 function toggleDrawDate(header) {
   const content = header.nextElementSibling;
@@ -207,13 +216,13 @@ function toggleDrawDate(header) {
   }
 }
 
-// ---------- Render Functions ----------
+// Render Functions ----------
 function generateMatchRow(m, drawId, showTime = false) {
-    const isOpen = state.openMatch === `${drawId}-${m.sheet}`;
-    const t1 = getTeam(m.t1) || { tname: "TBD", color: "#ccc" };
-    const t2 = getTeam(m.t2) || { tname: "TBD", color: "#ccc" };
+  const isOpen = state.openMatch === `${drawId}-${m.sheet}`;
+  const t1 = getTeam(m.t1) || { tname: "TBD", color: "#ccc" };
+  const t2 = getTeam(m.t2) || { tname: "TBD", color: "#ccc" };
 
-    return `
+  return `
     <div class="match-row ${getGenderClass(m.t1)}">
         ${showTime ? `<div style="font-size:0.65rem; font-weight:800; color:var(--text-dim); margin-bottom:4px; padding-left:45px;">${m.time}</div>` : ''}
         
@@ -241,7 +250,8 @@ function generateMatchRow(m, drawId, showTime = false) {
             <button onclick="commitScore(${drawId}, '${m.sheet}')" class="save-btn" style="width:100%; height:50px; background:var(--accent); color:white; border:none; border-radius:10px; font-weight:800;">SAVE RESULT</button>
         </div>` : ''}
     </div>`;
-}function render() {
+}
+function render() {
   const container = document.getElementById('view-container');
   if (!container) return;
 
@@ -269,7 +279,6 @@ function generateMatchRow(m, drawId, showTime = false) {
 
   if (window.innerWidth < 600) window.scrollTo(0, 0);
 }
-
 
 function liveUpdateScore(drawId, sheet) {
   const draw = state.data.draws.find(d => d.id === drawId);
@@ -302,7 +311,7 @@ function liveUpdateScore(drawId, sheet) {
 }
 
 
-// ---------- Render Draw Schedule ----------
+// Render ----------
 function renderDrawSchedule(container) {
   const drawsByDate = {};
   state.data.draws.forEach(d => {
@@ -315,55 +324,62 @@ function renderDrawSchedule(container) {
     const draws = drawsByDate[date];
     return `
         <div class="draw-date-group">
-            <div class="date-header" onclick="toggleDrawDate(this)">
-                <span class="toggle-indicator">▼</span> ${date}
-            </div>
-            <div class="date-content">
+           ${(() => {
+        const autoFold = isPastDate(date);
+        const isFolded = state.foldedDates[date] ?? autoFold;
+        const indicator = isFolded ? '▶' : '▼';
+
+        return `
+    <div class="date-header" data-date="${date}" onclick="toggleDrawDate(this)">
+        <span class="toggle-indicator">${indicator}</span> ${date}
+    </div>
+    <div class="date-content" style="display:${isFolded ? 'none' : 'block'};">
+    `;
+      })()}
+
                 ${draws.map(d => {
-      const matches = d.matches.filter(m =>
-        state.cat === 'A' || (m.t1 && m.t1.startsWith(state.cat))
-      );
-      if (!matches.length) return '';
-      return `
+        const matches = d.matches.filter(m =>
+          state.cat === 'A' || (m.t1 && m.t1.startsWith(state.cat))
+        );
+        if (!matches.length) return '';
+        return `
                         <div class="draw-group">
                             <div style="font-weight:800; color:var(--text-dim); margin-bottom:12px; font-size:0.7rem; text-transform:uppercase;">
                                 Draw ${d.id} • ${d.time}
                             </div>
                             ${matches.map(m => generateMatchRow(m, d.id)).join('')}
                         </div>`;
-    }).join('')}
+      }).join('')}
             </div>
         </div>`;
   }).join('');
 }
-
-// ---------- Render Team Schedule ----------
 function renderTeamSchedule(container) {
-    const allTeams = state.data.teams.filter(
-        t => state.cat === 'A' || t.UTID.startsWith(state.cat)
-    );
+  const allTeams = state.data.teams.filter(
+    t => state.cat === 'A' || t.UTID.startsWith(state.cat)
+  );
 
-    const sortedTeams = [...allTeams].sort((a, b) => {
-        const aP = state.pinnedTeams.includes(a.UTID);
-        const bP = state.pinnedTeams.includes(b.UTID);
-        return (aP === bP) ? a.tname.localeCompare(b.tname) : aP ? -1 : 1;
-    });
+  const sortedTeams = [...allTeams].sort((a, b) => {
+    const aP = state.pinnedTeams.includes(a.UTID);
+    const bP = state.pinnedTeams.includes(b.UTID);
+    return (aP === bP) ? a.tname.localeCompare(b.tname) : aP ? -1 : 1;
+  });
 
-    container.innerHTML = sortedTeams.map(team => {
-        const isPinned = state.pinnedTeams.includes(team.UTID);
+  container.innerHTML = sortedTeams.map(team => {
+    const isPinned = state.pinnedTeams.includes(team.UTID);
 
-        // Get matches and sort them chronologically
-        const teamMatches = state.data.draws.flatMap(d =>
-            d.matches
-                .filter(m => m.t1 === team.UTID || m.t2 === team.UTID)
-                .map(m => ({
-                    ...m,
-                    drawId: d.id,
-                    time: d.time // Grab time from the parent draw
-                }))
-        ).sort((a, b) => a.drawId - b.drawId); // Sort by Draw ID
+    // Get matches and sort them chronologically
+    const teamMatches = state.data.draws.flatMap(d =>
+      d.matches
+        .filter(m => m.t1 === team.UTID || m.t2 === team.UTID)
+        .map(m => ({
+          ...m,
+          drawId: d.id,
+          time: d.time // Grab time from the parent draw
+        }))
+    ).sort((a, b) => a.drawId - b.drawId); // Sort by Draw ID
 
-        return `
+    return `
             <div class="team-group ${getGenderClass(team.UTID)}" style="margin-bottom:48px; padding-left:10px;">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:2px solid ${team.color || '#eee'}; padding-bottom:8px;">
                     <button onclick="togglePin('${team.UTID}', event)" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:${isPinned ? 'var(--accent)' : '#ccc'}">
@@ -376,10 +392,8 @@ function renderTeamSchedule(container) {
                 ${teamMatches.map(m => generateMatchRow(m, m.drawId, true)).join('')}
             </div>
         `;
-    }).join('');
+  }).join('');
 }
-
-// ---------- Render Matrix ----------
 function renderMatrix(container) {
   const activePools = state.data.pools.filter(p => state.cat === 'A' || p.id.startsWith(state.cat));
   container.innerHTML = activePools.map(pool => {
@@ -430,8 +444,6 @@ function renderMatrix(container) {
         </div>`;
   }).join('');
 }
-
-// ---------- Render Playdown Editor ----------
 function renderPlaydownEditor(container) {
   const playdownDraws = state.data.draws.filter(d => d.id >= 15);
   if (!playdownDraws.length) {
@@ -473,67 +485,6 @@ function renderPlaydownEditor(container) {
         </div>`;
   }).join('');
 }
-
-// ---------- Initialization ----------
-async function init() {
-    // 1. Try loading from LocalStorage first (The "Single Location")
-    const savedDB = localStorage.getItem('curlingDB');
-    const savedMeta = localStorage.getItem('tournamentState');
-
-    if (savedDB) {
-        state.data = JSON.parse(savedDB);
-        console.log("Loaded from local memory");
-    } else {
-        // 2. Fallback to the original file
-        try {
-            const res = await fetch('userbase.json');
-            state.data = await res.json();
-            console.log("Loaded from userbase.json file");
-        } catch (err) {
-            console.error("Data load failed:", err);
-        }
-    }
-
-    // Load metadata if it exists
-    if (savedMeta) {
-        const meta = JSON.parse(savedMeta);
-        state.cat = meta.cat || state.cat;
-        state.view = meta.view || state.view;
-    }
-
-    render();
-}
-
-function liveUpdateScore(drawId, sheet) {
-  const draw = state.data.draws.find(d => d.id === drawId);
-  if (!draw) return;
-
-  const match = draw.matches.find(m => m.sheet === sheet);
-  if (!match) return;
-
-  match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
-  match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
-  match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
-
-  // sync to scores array
-  const idx = state.scores.findIndex(
-    s => s.drawId === drawId && s.sheet === sheet
-  );
-
-  const scoreObj = { drawId, sheet, ...match };
-
-  if (idx > -1) state.scores[idx] = scoreObj;
-  else state.scores.push(scoreObj);
-
-  // debounce localStorage writes
-  clearTimeout(liveUpdateTimer);
-  liveUpdateTimer = setTimeout(() => {
-    saveState();
-  }, 300);
-
-  render(); // live update UI
-}
-
 function renderStandings(container) {
 
   function buildStandingsTable(title, teams) {
@@ -656,12 +607,79 @@ function renderStandings(container) {
 `;
 
 }
-function toggleDrawDate(header) {
-    const content = header.nextElementSibling;
-    const indicator = header.querySelector('.toggle-indicator');
-    const isHidden = content.style.display === 'none';
-    content.style.display = isHidden ? 'block' : 'none';
-    indicator.textContent = isHidden ? '▼' : '▶';
+
+// Initialization ----------
+async function init() {
+  // 1. Try loading from LocalStorage first (The "Single Location")
+  const savedDB = localStorage.getItem('curlingDB');
+  const savedMeta = localStorage.getItem('tournamentState');
+
+  if (savedDB) {
+    state.data = JSON.parse(savedDB);
+    console.log("Loaded from local memory");
+  } else {
+    // 2. Fallback to the original file
+    try {
+      const res = await fetch('userbase.json');
+      state.data = await res.json();
+      console.log("Loaded from userbase.json file");
+    } catch (err) {
+      console.error("Data load failed:", err);
+    }
+  }
+
+  // Load metadata if it exists
+  if (savedMeta) {
+    const meta = JSON.parse(savedMeta);
+    state.cat = meta.cat || state.cat;
+    state.view = meta.view || state.view;
+  }
+
+  render();
 }
+
+function liveUpdateScore(drawId, sheet) {
+  const draw = state.data.draws.find(d => d.id === drawId);
+  if (!draw) return;
+
+  const match = draw.matches.find(m => m.sheet === sheet);
+  if (!match) return;
+
+  match.s1 = parseInt(document.getElementById(`s1-${drawId}-${sheet}`).value) || 0;
+  match.s2 = parseInt(document.getElementById(`s2-${drawId}-${sheet}`).value) || 0;
+  match.completed = document.getElementById(`final-${drawId}-${sheet}`).checked;
+
+  // sync to scores array
+  const idx = state.scores.findIndex(
+    s => s.drawId === drawId && s.sheet === sheet
+  );
+
+  const scoreObj = { drawId, sheet, ...match };
+
+  if (idx > -1) state.scores[idx] = scoreObj;
+  else state.scores.push(scoreObj);
+
+  // debounce localStorage writes
+  clearTimeout(liveUpdateTimer);
+  liveUpdateTimer = setTimeout(() => {
+    saveState();
+  }, 300);
+
+  render(); // live update UI
+}
+function toggleDrawDate(header) {
+  const date = header.dataset.date;
+  const content = header.nextElementSibling;
+  const indicator = header.querySelector('.toggle-indicator');
+
+  const isHidden = content.style.display === 'none';
+
+  content.style.display = isHidden ? 'block' : 'none';
+  indicator.textContent = isHidden ? '▼' : '▶';
+
+  state.foldedDates[date] = !isHidden;
+  localStorage.setItem('foldedDates', JSON.stringify(state.foldedDates));
+}
+
 
 init();
