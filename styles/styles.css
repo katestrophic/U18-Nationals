@@ -338,3 +338,17 @@ input[type="color"]::-webkit-color-swatch {
 
     .app-body { padding: 20px 12px 100px 12px; }
 }
+.pinned-team {
+  background: #fff8dc; /* subtle gold tint */
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+}
+
+.pinned-name {
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.pinned-glow {
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.25);
+}

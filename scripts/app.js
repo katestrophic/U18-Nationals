@@ -8,9 +8,11 @@ let state = {
   pinnedTeams: JSON.parse(localStorage.getItem('pinnedTeams')) || [],
   openMatches: [],
   openMatch: null,
+  teamSearch: "",
   scores: [],
   foldedDates: JSON.parse(localStorage.getItem('foldedDates')) || {},
-  foldedDraws: JSON.parse(localStorage.getItem('foldedDraws')) || {}
+  foldedDraws: JSON.parse(localStorage.getItem('foldedDraws')) || {},
+  foldedTeams: JSON.parse(localStorage.getItem('foldedTeams')) || {}
 };
 
 const savedState = localStorage.getItem('tournamentState');
@@ -25,6 +27,9 @@ if (savedState) {
   }
 }
 
+function isPinnedTeam(teamId) {
+  return state.pinnedTeams.includes(teamId);
+}
 const isPinnedMatch = (m) => state.pinnedTeams.includes(m.t1) || state.pinnedTeams.includes(m.t2);
 const getTeam = (id) => state.data?.teams.find(t => t.UTID === id);
 const getFlag = (id) => `./assets/flags/canada/${getTeam(id)?.UPID.toLowerCase()}_flag.png`;
@@ -42,7 +47,8 @@ function saveState() {
     openMatches: state.openMatches,
     scores: state.scores,
     foldedDates: state.foldedDates,
-    foldedDraws: state.foldedDraws
+    foldedDraws: state.foldedDraws,
+    foldedTeams: state.foldedTeams
   }));
 }
 function savePinnedTeams() {
@@ -297,7 +303,7 @@ function generateMatchRow(m, drawId, showTime = false) {
                 ${m.t1 !== 'TBD' ? `<img src="${getFlag(m.t1)}" class="flag-icon" style="width:20px;">` : ''}
                 <span style="color:${t1.color || '#0f172a'}; font-weight:700;">${t1.tname}</span>
             </div>
-            <span class="score-pill ${m.completed ? 'complete' : ''}">${m.s1 || 0} — ${m.s2 || 0}</span>
+            <span class="score-pill ${m.completed ? 'complete' : ''}"  style="${m.resultStyle || ''}">${m.s1 || 0} — ${m.s2 || 0}</span>
             <div class="t2-col">
                 <span style="color:${t2.color || '#0f172a'}; font-weight:700;">${t2.tname}</span>
                 ${m.t2 !== 'TBD' ? `<img src="${getFlag(m.t2)}" class="flag-icon" style="width:20px;">` : ''}
@@ -372,15 +378,42 @@ function renderDrawSchedule(container) {
 }
 function renderTeamSchedule(container) {
   const allTeams = state.data.teams.filter(t => state.cat === 'A' || t.UTID.startsWith(state.cat));
+  const filteredTeams = allTeams.filter(t =>
+    t.tname.toLowerCase().includes(state.teamSearch.toLowerCase())
+  );
 
-  const sortedTeams = [...allTeams].sort((a, b) => {
+  const sortedTeams = [...filteredTeams].sort((a, b) => {
     const aP = state.pinnedTeams.includes(a.UTID);
     const bP = state.pinnedTeams.includes(b.UTID);
     return (aP === bP) ? a.tname.localeCompare(b.tname) : aP ? -1 : 1;
   });
 
-  container.innerHTML = sortedTeams.map(t => {
+  const searchBar = `
+  <div style="display:flex; gap:10px; align-items:center; margin-bottom:24px;">
+
+    <input type="text"
+           placeholder="Search team..."
+           value="${state.teamSearch}"
+           oninput="updateTeamSearch(this.value)"
+           style="flex:1; padding:8px 12px; border-radius:8px; border:1px solid #ddd; font-size:0.9rem;">
+
+    <button onclick="foldAllTeams()"
+            style="padding:8px 14px; border-radius:8px; border:1px solid #ddd; cursor:pointer;">
+      Fold All
+    </button>
+
+    <button onclick="expandAllTeams()"
+            style="padding:8px 14px; border-radius:8px; border:1px solid #ddd; cursor:pointer;">
+      Expand All
+    </button>
+
+  </div>
+`;
+
+  container.innerHTML = searchBar + sortedTeams.map(t => {
     const isPinned = state.pinnedTeams.includes(t.UTID);
+    const isFolded = state.foldedTeams[t.UTID];
+    const indicator = isFolded ? '▶' : '▼';
 
     const matches = state.data.draws.flatMap(d =>
       d.matches.filter(m => m.t1 === t.UTID || m.t2 === t.UTID)
@@ -389,15 +422,30 @@ function renderTeamSchedule(container) {
 
     return `
       <div class="team-group ${getGenderClass(t.UTID)}" style="margin-bottom:48px; padding-left:10px;">
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:2px solid ${t.color || '#eee'}; padding-bottom:8px;">
+
+        <div onclick="toggleTeamFold('${t.UTID}')"
+             style="display:flex; align-items:center; gap:10px; margin-bottom:16px; border-bottom:2px solid ${t.color || '#eee'}; padding-bottom:8px; cursor:pointer;">
+          
+          <span style="font-weight:900; font-size:0.8rem;">${indicator}</span>
           <img src="${getFlag(t.UTID)}" class="flag-icon" style="width:40px;">
-          <h2 style="margin:0;font-size:1rem;color:${t.color || 'inherit'};flex-grow:1;">${t.tname}</h2>
-          <input type="color" value="${t.color || '#0f172a'}" onchange="updateTeamColor('${t.UTID}', this.value)">
-          <button onclick="togglePin('${t.UTID}', event)" style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:${isPinned ? 'var(--accent)' : '#ccc'}">
+          <h2 style="margin:0;font-size:1rem;color:${t.color || 'inherit'};flex-grow:1;">
+            ${t.tname}
+          </h2>
+
+          <input type="color" value="${t.color || '#0f172a'}"
+                 onclick="event.stopPropagation()"
+                 onchange="updateTeamColor('${t.UTID}', this.value)">
+
+          <button onclick="togglePin('${t.UTID}', event)"
+                  style="background:none;border:none;cursor:pointer;font-size:1.5rem;color:${isPinned ? 'var(--accent)' : '#ccc'}">
             <i class="${isPinned ? 'ph-fill' : 'ph'} ph-push-pin"></i>
           </button>
         </div>
-        ${matches.map(m => generateMatchRow(m, m.drawId, true)).join('')}
+
+        <div style="display:${isFolded ? 'none' : 'block'};">
+          ${matches.map(m => generateMatchRowWithResult(m, t.UTID)).join('')}
+        </div>
+
       </div>`;
   }).join('');
 }
@@ -425,23 +473,23 @@ function renderMatrix(container) {
             </thead>
             <tbody>
               ${poolTeams.map((t, i) => {
-        let w = 0, l = 0;
-        const cells = poolTeams.map((opp, j) => {
-          if (i === j) return `<td style="background:#e2e8f0; border-right:1px solid var(--border);"></td>`;
-          const m = state.data.draws.flatMap(d => d.matches)
-            .find(match => match.completed &&
-              ((match.t1 === t.UTID && match.t2 === opp.UTID) ||
-               (match.t1 === opp.UTID && match.t2 === t.UTID))
-            );
-          if (!m) return `<td style="border-right:1px solid var(--border); text-align:center; color:#cbd5e1;">-</td>`;
-          const won = (m.t1 === t.UTID) ? (m.s1 > m.s2) : (m.s2 > m.s1);
-          won ? w++ : l++;
-          return `<td style="border-right:1px solid var(--border); text-align:center; font-weight:800; color:${won ? 'var(--success)' : '#ef4444'};">${won ? 'W' : 'L'}</td>`;
-        }).join('');
+      let w = 0, l = 0;
+      const cells = poolTeams.map((opp, j) => {
+        if (i === j) return `<td style="background:#e2e8f0; border-right:1px solid var(--border);"></td>`;
+        const m = state.data.draws.flatMap(d => d.matches)
+          .find(match => match.completed &&
+            ((match.t1 === t.UTID && match.t2 === opp.UTID) ||
+              (match.t1 === opp.UTID && match.t2 === t.UTID))
+          );
+        if (!m) return `<td style="border-right:1px solid var(--border); text-align:center; color:#cbd5e1;">-</td>`;
+        const won = (m.t1 === t.UTID) ? (m.s1 > m.s2) : (m.s2 > m.s1);
+        won ? w++ : l++;
+        return `<td style="border-right:1px solid var(--border); text-align:center; font-weight:800; color:${won ? 'var(--success)' : '#ef4444'};">${won ? 'W' : 'L'}</td>`;
+      }).join('');
 
-        // Left column: team name + W-L over the flag, fixed width
-        const skipName = (t.tname.match(/\(([^)]+)\)/) || [])[1] || t.tname;
-        return `<tr style="border-bottom:1px solid var(--border);">
+      // Left column: team name + W-L over the flag, fixed width
+      const skipName = (t.tname.match(/\(([^)]+)\)/) || [])[1] || t.tname;
+      return `<tr style="border-bottom:1px solid var(--border);">
                   <td style="
                     width:120px;
                     font-weight: 1000;
@@ -462,7 +510,7 @@ function renderMatrix(container) {
                   </td>
                   ${cells}
                 </tr>`;
-      }).join('')}
+    }).join('')}
             </tbody>
           </table>
         </div>
@@ -609,6 +657,59 @@ function render() {
 
   if (window.innerWidth < 600) window.scrollTo(0, 0);
 }
+function generateMatchRowWithResult(m, teamId) {
+
+  if (!m.completed) {
+    return generateMatchRow(m, m.drawId, true);
+  }
+
+  const isT1 = m.t1 === teamId;
+  const won = isT1 ? (m.s1 > m.s2) : (m.s2 > m.s1);
+
+  const style = won
+    ? 'background:#dcfce7; color:var(--success); border:1px solid #bbf7d0;'
+    : 'background:#fee2e2; color:#ef4444; border:1px solid #fecaca;';
+
+  const matchCopy = { ...m, resultStyle: style };
+
+  return generateMatchRow(matchCopy, m.drawId, true);
+}
+
+function toggleTeamFold(teamId) {
+  state.foldedTeams[teamId] = !state.foldedTeams[teamId];
+
+  localStorage.setItem('foldedTeams', JSON.stringify(state.foldedTeams));
+
+  render();
+}
+
+function updateTeamSearch(value) {
+  state.teamSearch = value;
+  render();
+}
+
+function foldAllTeams() {
+  const teams = state.data.teams
+    .filter(t => state.cat === 'A' || t.UTID.startsWith(state.cat));
+
+  teams.forEach(t => {
+    state.foldedTeams[t.UTID] = true;
+  });
+
+  localStorage.setItem('foldedTeams', JSON.stringify(state.foldedTeams));
+  render();
+}
+function expandAllTeams() {
+  const teams = state.data.teams
+    .filter(t => state.cat === 'A' || t.UTID.startsWith(state.cat));
+
+  teams.forEach(t => {
+    state.foldedTeams[t.UTID] = false;
+  });
+
+  localStorage.setItem('foldedTeams', JSON.stringify(state.foldedTeams));
+  render();
+}
 
 
 // Initialization ----------
@@ -630,6 +731,7 @@ async function init() {
     state.openMatches = meta.openMatches || [];
     state.foldedDates = meta.foldedDates || {};
     state.foldedDraws = meta.foldedDraws || {};
+    state.foldedTeams = JSON.parse(localStorage.getItem('foldedTeams')) || {};
     state.pinnedTeams = JSON.parse(localStorage.getItem('pinnedTeams')) || [];
   }
 
